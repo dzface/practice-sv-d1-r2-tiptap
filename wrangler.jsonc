@@ -1,0 +1,27 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "practice-sv-d1-r2-tipex",
+	"compatibility_date": "2026-07-05",
+	"compatibility_flags": ["nodejs_compat"],
+	"main": ".svelte-kit/cloudflare/_worker.js",
+	"assets": {
+		"binding": "ASSETS",
+		"directory": ".svelte-kit/cloudflare"
+	},
+	"workers_dev": true,
+	"preview_urls": true,
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "liltokki-db",
+			"database_id": "de3a573c-4b96-4da6-8cd1-c430f469eebd",
+			"migrations_dir": "drizzle"
+		}
+	],
+	"r2_buckets": [
+		{
+			"bucket_name": "liltokki-files",
+			"binding": "FILES"
+		}
+	]
+}
