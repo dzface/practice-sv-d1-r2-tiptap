@@ -13,12 +13,12 @@
 		{data.post.authorName} · 조회 {data.post.viewCount} · 순추천
 		{data.post.upvoteCount - data.post.downvoteCount}
 	</p>
-	<div class="post-body">{data.post.body}</div>
+	<div class="post-body">{@html data.post.body}</div>
 </article>
 
 <style>
 	.post-body {
 		margin-top: 2rem;
-		white-space: pre-wrap;
+		line-height: 1.75;
 	}
 </style>

@@ -15,15 +15,20 @@ async function startSocialLogin(
 	locals: App.Locals,
 	request: Request
 ) {
+	let result: Awaited<ReturnType<typeof locals.auth.api.signInSocial>>;
+
 	try {
-		const result = await locals.auth.api.signInSocial({
+		result = await locals.auth.api.signInSocial({
 			body: { provider, callbackURL: '/', errorCallbackURL: '/login' },
 			headers: request.headers
 		});
-		if (result.url) redirect(303, result.url);
-	} catch {
+	} catch (error) {
+		console.error('Failed to start social login', { provider, error });
 		return fail(500, { message: '소셜 로그인을 시작하지 못했습니다.' });
 	}
+
+	if (result.url) redirect(303, result.url);
+
 	return fail(500, { message: '소셜 로그인 설정을 확인해 주세요.' });
 }
 

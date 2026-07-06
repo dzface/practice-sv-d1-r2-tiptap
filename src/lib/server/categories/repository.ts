@@ -10,7 +10,8 @@ const summary = {
 	name: categories.name,
 	group: categories.group,
 	groupOrder: categories.groupOrder,
-	sortOrder: categories.sortOrder
+	sortOrder: categories.sortOrder,
+	movementKind: categories.movementKind
 };
 
 export function createCategoryRepository(db: Db) {

@@ -20,13 +20,6 @@ CREATE TABLE `category_movement_rules` (
 CREATE UNIQUE INDEX `category_movement_rules_source_direction_unique`
 ON `category_movement_rules` (`source_category_id`, `direction`);
 --> statement-breakpoint
-INSERT INTO `category_movement_rules`
-  (`id`, `source_category_id`, `target_category_id`, `direction`, `score_threshold`, `point_delta`, `is_active`)
-VALUES
-  ('lil_to_big', 'cat_lil', 'cat_big', 'gte', 10, 100, 1),
-  ('lil_to_worst', 'cat_lil', 'cat_worst', 'lte', -10, -30, 1),
-  ('big_to_trend', 'cat_big', 'trend', 'gte', 100, 1000, 1);
---> statement-breakpoint
 CREATE TABLE `posts` (
 	`id` text PRIMARY KEY NOT NULL,
 	`category_id` text NOT NULL,

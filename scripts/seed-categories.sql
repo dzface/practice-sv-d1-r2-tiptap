@@ -32,3 +32,17 @@ ON CONFLICT(id) DO UPDATE SET
   positive_threshold = excluded.positive_threshold,
   negative_threshold = excluded.negative_threshold,
   is_active = excluded.is_active;
+
+INSERT INTO category_movement_rules
+  (id, source_category_id, target_category_id, direction, score_threshold, point_delta, is_active)
+VALUES
+  ('lil_to_big', 'cat_lil', 'cat_big', 'gte', 10, 100, 1),
+  ('lil_to_worst', 'cat_lil', 'cat_worst', 'lte', -10, -30, 1),
+  ('big_to_trend', 'cat_big', 'trend', 'gte', 100, 1000, 1)
+ON CONFLICT(id) DO UPDATE SET
+  source_category_id = excluded.source_category_id,
+  target_category_id = excluded.target_category_id,
+  direction = excluded.direction,
+  score_threshold = excluded.score_threshold,
+  point_delta = excluded.point_delta,
+  is_active = excluded.is_active;

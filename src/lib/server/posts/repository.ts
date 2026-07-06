@@ -8,6 +8,32 @@ type Db = ReturnType<typeof getDb>;
 
 export function createPostRepository(db: Db) {
 	return {
+		create: async ({
+			categoryId,
+			authorId,
+			authorName,
+			title,
+			body
+		}: {
+			categoryId: string;
+			authorId: string;
+			authorName: string;
+			title: string;
+			body: string;
+		}) => {
+			const id = crypto.randomUUID();
+			await db.insert(posts).values({
+				id,
+				categoryId,
+				originalCategoryId: categoryId,
+				authorId,
+				authorName,
+				title,
+				body
+			});
+			return id;
+		},
+
 		findPublicById: async (categoryId: string, postId: string) => {
 			const [post] = await db
 				.select({

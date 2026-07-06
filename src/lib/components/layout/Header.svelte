@@ -3,7 +3,12 @@
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 	import { siteConfig } from '$lib/config/site.config';
 
-	let { user }: { user: { name: string } | null } = $props();
+	type HeaderUser = {
+		name: string;
+		profile: { nickname: string } | null;
+	};
+
+	let { user }: { user: HeaderUser | null } = $props();
 </script>
 
 <header class="container box">
@@ -11,6 +16,11 @@
 	<div class="header-actions">
 		<ThemeToggle />
 		{#if user}
+			{#if user.profile}
+				<a class="profile-link" href={resolve('/(app)/profile')}>{user.profile.nickname}</a>
+			{:else}
+				<a class="profile-link" href={resolve('/(app)/profile/setup')}>닉네임 설정</a>
+			{/if}
 			<form method="post" action="/logout">
 				<button type="submit">로그아웃</button>
 			</form>
@@ -31,6 +41,13 @@
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
+	}
+
+	.profile-link {
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		padding: 0.35rem 0.75rem;
+		text-decoration: none;
 	}
 
 	form {

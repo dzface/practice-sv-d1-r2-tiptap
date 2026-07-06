@@ -5,6 +5,7 @@ export type CategorySummary = {
 	group: string;
 	groupOrder: number;
 	sortOrder: number;
+	movementKind?: 'standard' | 'promotion_source' | 'promotion_target' | 'worst_target';
 };
 
 export type CategoryGroup = {
