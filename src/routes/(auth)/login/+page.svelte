@@ -1,9 +1,6 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { resolve } from '$app/paths';
-	import type { ActionData } from './$types';
-
-	let { form }: { form: ActionData } = $props();
+	import type { ActionData, PageData } from './$types';
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
 
 <svelte:head><title>로그인 · 릴토끼</title></svelte:head>
@@ -11,19 +8,16 @@
 <main class="auth-page container">
 	<section class="auth-box">
 		<h1>로그인</h1>
-		<form method="post" use:enhance>
-			<label>
-				이메일
-				<input type="email" name="email" autocomplete="email" required />
-			</label>
-			<label>
-				비밀번호
-				<input type="password" name="password" autocomplete="current-password" required />
-			</label>
-			<button type="submit">로그인</button>
-		</form>
+		{#if data.googleEnabled}
+			<form method="post" action="?/google"><button type="submit">Google로 로그인</button></form>
+		{/if}
+		{#if data.githubEnabled}
+			<form method="post" action="?/github"><button type="submit">GitHub로 로그인</button></form>
+		{/if}
+		{#if !data.googleEnabled && !data.githubEnabled}
+			<p class="muted">소셜 로그인 설정 전입니다.</p>
+		{/if}
 		{#if form?.message}<p class="form-error" role="alert">{form.message}</p>{/if}
-		<p>계정이 없나요? <a href={resolve('/(auth)/signup')}>회원가입</a></p>
 	</section>
 </main>
 
@@ -35,16 +29,11 @@
 		width: min(100%, 26rem);
 		margin-inline: auto;
 	}
-	form,
-	label {
-		display: grid;
-		gap: 0.5rem;
-	}
 	form {
-		gap: 1rem;
+		margin-block: 1rem;
 	}
-	input,
 	button {
+		width: 100%;
 		padding: 0.7rem;
 	}
 	.form-error {

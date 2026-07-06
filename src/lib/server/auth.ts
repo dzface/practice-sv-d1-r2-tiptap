@@ -5,13 +5,25 @@ import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { getRequestEvent } from '$app/server';
 import { getDb } from '$lib/server/db';
 
+const googleClientId = env.GOOGLE_CLIENT_ID;
+const googleClientSecret = env.GOOGLE_CLIENT_SECRET;
+const githubClientId = env.GITHUB_CLIENT_ID;
+const githubClientSecret = env.GITHUB_CLIENT_SECRET;
+
+const socialProviders = {
+	...(googleClientId && googleClientSecret
+		? { google: { clientId: googleClientId, clientSecret: googleClientSecret } }
+		: {}),
+	...(githubClientId && githubClientSecret
+		? { github: { clientId: githubClientId, clientSecret: githubClientSecret } }
+		: {})
+};
+
 const authConfig = {
 	baseURL: env.ORIGIN,
 	secret: env.BETTER_AUTH_SECRET,
-	emailAndPassword: { enabled: true },
-	plugins: [
-		sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array
-	]
+	socialProviders,
+	plugins: [sveltekitCookies(getRequestEvent)]
 } satisfies Omit<Parameters<typeof betterAuth>[0], 'database'>;
 
 export const createAuth = (d1: D1Database) =>

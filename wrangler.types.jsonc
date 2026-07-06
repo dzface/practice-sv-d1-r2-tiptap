@@ -3,6 +3,14 @@
 	"name": "practice-sv-d1-r2-tipex-types",
 	"compatibility_date": "2026-07-05",
 	"compatibility_flags": ["nodejs_compat"],
+	"vars": {
+		"ORIGIN": "",
+		"BETTER_AUTH_SECRET": "",
+		"GOOGLE_CLIENT_ID": "",
+		"GOOGLE_CLIENT_SECRET": "",
+		"GITHUB_CLIENT_ID": "",
+		"GITHUB_CLIENT_SECRET": ""
+	},
 	"d1_databases": [
 		{
 			"binding": "DB",

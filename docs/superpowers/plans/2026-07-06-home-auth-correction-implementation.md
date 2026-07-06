@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 모든 활성 게시판의 최신글 10행을 홈에 표시하고, 빅토끼 인기글 규칙과 실제 로그인·회원가입·로그아웃 경로를 바로잡는다.
+**Goal:** 모든 활성 게시판의 최신글 10행을 홈에 표시하고, 빅토끼 인기글 규칙과 실제 소셜 로그인·로그아웃 경로를 바로잡는다.
 
 **Architecture:** D1에는 게시글과 데이터 기반 게시판 이동 규칙을 추가한다. 홈 서버 로더는 활성 카테고리와 공개 게시글을 읽어 게시판별 최대 10개로 묶고, Svelte 컴포넌트는 빈 게시판도 고정 10행 높이로 렌더링한다. 인증 화면은 `(auth)` 라우트 그룹으로 분리하고 `(app)` 레이아웃이 세션 유무만 헤더에 전달한다.
 
@@ -18,7 +18,7 @@
 - `src/lib/server/posts/repository.ts`: 홈 최신글 D1 조회
 - `src/lib/components/post/HomeBoard.svelte`: 게시판 제목과 고정 10행 목록
 - `src/routes/(app)/+page.server.ts`: 홈 데이터 조립
-- `src/routes/(auth)/login/*`, `signup/*`, `logout/+server.ts`: 실제 인증 경로
+- `src/routes/(auth)/login/*`, `logout/+server.ts`: 실제 인증 경로
 - `src/lib/components/layout/Header.svelte`: 인증 상태별 버튼
 - `drizzle/0001_home_posts_and_movement_rules.sql`: 기존 DB용 후속 마이그레이션
 
@@ -79,8 +79,6 @@
 
 - 생성: `src/routes/(auth)/login/+page.server.ts`
 - 생성: `src/routes/(auth)/login/+page.svelte`
-- 생성: `src/routes/(auth)/signup/+page.server.ts`
-- 생성: `src/routes/(auth)/signup/+page.svelte`
 - 생성: `src/routes/(auth)/logout/+server.ts`
 - 수정: `src/routes/(app)/+layout.server.ts`
 - 수정: `src/routes/(app)/+layout.svelte`
@@ -90,9 +88,8 @@
 - 삭제: `src/routes/demo/better-auth/login/+page.server.ts`
 - 삭제: `src/routes/demo/better-auth/login/+page.svelte`
 
-- [ ] 로그인 액션은 이메일·비밀번호로 Better Auth를 호출하고 성공 시 `/`, 실패 시 한국어 일반 오류를 반환하도록 구현한다.
-- [ ] 회원가입 액션은 이름·이메일·비밀번호로 Better Auth를 호출하고 성공 시 `/`, 실패 시 한국어 일반 오류를 반환하도록 구현한다.
-- [ ] 두 페이지 모두 이미 로그인했다면 `/`로 이동하고 서로의 화면으로 가는 링크를 제공한다.
+- [ ] 로그인 액션은 Google·GitHub OAuth를 시작하고 성공 시 `/`, 실패 시 한국어 일반 오류를 반환하도록 구현한다.
+- [ ] 로그인한 사용자가 `/login`을 열면 `/`로 이동한다.
 - [ ] `/logout` POST 처리에서 Better Auth 로그아웃 후 `/`로 이동하도록 구현한다.
 - [ ] `(app)` 레이아웃이 `user: { name } | null`을 반환하고 Header에 전달하게 한다.
 - [ ] Header는 비로그인 상태에 `/login` 링크, 로그인 상태에 `/logout` POST 버튼을 표시한다.
