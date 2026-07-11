@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import type { getDb } from '$lib/server/db';
-import { profiles } from '$lib/server/db/schema';
+import { profiles, user } from '$lib/server/db/schema';
 
 type Db = ReturnType<typeof getDb>;
 
@@ -34,6 +34,14 @@ export function createProfileRepository(db: Db) {
 				.where(eq(profiles.nickname, nickname))
 				.limit(1);
 			return Boolean(profile);
+		},
+
+		updateNickname: async ({ userId, nickname }: { userId: string; nickname: string }) => {
+			await db.update(profiles).set({ nickname }).where(eq(profiles.userId, userId));
+		},
+
+		deleteAccount: async (userId: string) => {
+			await db.delete(user).where(eq(user.id, userId));
 		},
 
 		create: async ({ userId, nickname }: { userId: string; nickname: string }) => {

@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 	if (!user?.profile) redirect(303, '/profile/setup');
 
 	const writableCategories = categories.filter((category) =>
-		canWriteToCategory({ movementKind: category.movementKind ?? 'standard' })
+		canWriteToCategory({ slug: category.slug })
 	);
 	const selectedCategory =
 		writableCategories.find((category) => category.slug === url.searchParams.get('category')) ??
@@ -32,7 +32,7 @@ export const actions: Actions = {
 		const categorySlug = String(form.get('category') ?? '');
 		const category = await createCategoryRepository(db).findActiveBySlug(categorySlug);
 
-		if (!category || !canWriteToCategory({ movementKind: category.movementKind })) {
+		if (!category || !canWriteToCategory({ slug: category.slug })) {
 			return fail(400, { message: '글을 작성할 수 없는 게시판입니다.' });
 		}
 

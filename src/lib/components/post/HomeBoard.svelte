@@ -17,8 +17,8 @@
 						postId: post.id
 					})}>{post.title}</a
 				>
-				<span class="post-meta" aria-label={`조회 ${post.viewCount}, 순추천 ${post.score}`}>
-					{post.viewCount} / {post.score}
+				<span class="post-meta" aria-label={`댓글 ${post.commentCount}, 좋아요 ${post.score}`}>
+					{post.commentCount} 👍{post.score}
 				</span>
 			</li>
 		{/each}
@@ -60,6 +60,6 @@
 	.post-meta {
 		flex: none;
 		font-size: 0.8rem;
-		opacity: 0.65;
+		opacity: 0.75;
 	}
 </style>

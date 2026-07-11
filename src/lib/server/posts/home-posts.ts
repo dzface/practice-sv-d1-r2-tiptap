@@ -11,8 +11,9 @@ export type HomePostSource = {
 };
 
 export type HomePost = HomePostSource & { score: number };
+export type HomePostItem = HomePostSource & { score: number; commentCount: number };
 
-export type HomeBoard = CategorySummary & { posts: HomePost[] };
+export type HomeBoard = CategorySummary & { posts: HomePostItem[] };
 
 export function groupHomePosts(
 	categories: CategorySummary[],
@@ -32,6 +33,10 @@ export function groupHomePosts(
 		posts: (postsByCategory.get(category.id) ?? [])
 			.sort((first, second) => second.createdAt.getTime() - first.createdAt.getTime())
 			.slice(0, limit)
-			.map((post) => ({ ...post, score: post.upvoteCount - post.downvoteCount }))
+			.map((post) => ({
+				...post,
+				score: post.upvoteCount - post.downvoteCount,
+				commentCount: 0
+			}))
 	}));
 }

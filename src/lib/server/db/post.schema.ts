@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { user } from './auth.schema';
 import { categories } from './category.schema';
 
@@ -33,4 +33,25 @@ export const posts = sqliteTable(
 	(table) => [
 		index('posts_category_status_created_idx').on(table.categoryId, table.status, table.createdAt)
 	]
+);
+
+export const postVotes = sqliteTable(
+	'post_votes',
+	{
+		id: text('id').primaryKey(),
+		postId: text('post_id')
+			.notNull()
+			.references(() => posts.id, { onDelete: 'cascade' }),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		value: integer('value').notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+	},
+	(table) => [uniqueIndex('post_votes_post_user_unique').on(table.postId, table.userId)]
 );

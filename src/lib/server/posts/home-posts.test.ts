@@ -30,6 +30,7 @@ describe('groupHomePosts', () => {
 		expect(result).toHaveLength(2);
 		expect(result[0].posts).toHaveLength(10);
 		expect(result[0].posts[0].id).toBe('post-11');
+		expect(result[0].posts[0].commentCount).toBe(0);
 		expect(result[0].posts.at(-1)?.id).toBe('post-2');
 		expect(result[1]).toMatchObject({ id: 'trend', posts: [] });
 	});
