@@ -3,8 +3,7 @@ type CategoryWritePolicy = {
 };
 
 type PostInputValidationResult =
-	| { ok: true; title: string; body: string }
-	| { ok: false; message: string };
+	{ ok: true; title: string; body: string } | { ok: false; message: string };
 
 const blockedWriteSlugs = new Set(['big', 'trend', 'worst']);
 const allowedTags = new Set([
@@ -24,8 +23,61 @@ const allowedTags = new Set([
 	'h1',
 	'h2',
 	'h3',
-	'a'
+	'h4',
+	'h5',
+	'h6',
+	'a',
+	'u',
+	'sub',
+	'sup',
+	'hr',
+	'img',
+	'iframe',
+	'table',
+	'thead',
+	'tbody',
+	'tr',
+	'th',
+	'td',
+	'span'
 ]);
+
+const styleTags = new Set(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'th', 'td']);
+
+function readAttribute(attributes: string, name: string) {
+	const match = attributes.match(new RegExp(`\\s${name}=(["'])(.*?)\\1`, 'i'));
+	return match?.[2]?.trim();
+}
+
+function escapeAttribute(value: string) {
+	return value.replace(/"/g, '&quot;');
+}
+
+function sanitizeStyle(rawStyle: string) {
+	const allowed = new Set(['color', 'background-color', 'font-family', 'font-size', 'text-align']);
+	const styles = rawStyle
+		.split(';')
+		.map((entry) => entry.trim())
+		.filter(Boolean)
+		.flatMap((entry) => {
+			const [property, ...valueParts] = entry.split(':');
+			const key = property?.trim().toLowerCase();
+			const value = valueParts.join(':').trim();
+			if (!allowed.has(key) || !value || /url|expression|javascript/i.test(value)) return [];
+			return [`${key}:${value}`];
+		});
+	return styles.length ? ` style="${escapeAttribute(styles.join(';'))}"` : '';
+}
+
+function isSafeUrl(value: string) {
+	return /^https?:\/\//i.test(value);
+}
+
+function isSafeYoutubeEmbed(value: string) {
+	return /^https:\/\/(www\.)?(youtube\.com|youtube-nocookie\.com)\/embed\/[a-zA-Z0-9_-]+/i.test(
+		value
+	);
+}
 
 export function canWriteToCategory(category: CategoryWritePolicy) {
 	return !blockedWriteSlugs.has(category.slug);
@@ -40,13 +92,26 @@ export function sanitizePostBody(html: string) {
 			const isClosing = match.startsWith('</');
 			if (!allowedTags.has(tag)) return '';
 			if (isClosing) return `</${tag}>`;
-			if (tag !== 'a') return `<${tag}>`;
+			const rawStyle = readAttribute(String(rawAttributes), 'style') ?? '';
+			const style = styleTags.has(tag) ? sanitizeStyle(rawStyle) : '';
 
-			const hrefMatch = String(rawAttributes).match(/\shref=(["'])(.*?)\1/i);
-			const href = hrefMatch?.[2]?.trim();
-			if (!href || !/^https?:\/\//i.test(href)) return '<a>';
-			const safeHref = href.replace(/"/g, '&quot;');
-			return `<a href="${safeHref}" rel="nofollow noopener noreferrer" target="_blank">`;
+			if (tag === 'a') {
+				const href = readAttribute(String(rawAttributes), 'href');
+				if (!href || !isSafeUrl(href)) return '<a>';
+				return `<a href="${escapeAttribute(href)}" rel="nofollow noopener noreferrer" target="_blank">`;
+			}
+			if (tag === 'img') {
+				const src = readAttribute(String(rawAttributes), 'src');
+				if (!src || !isSafeUrl(src)) return '';
+				const alt = readAttribute(String(rawAttributes), 'alt');
+				return `<img src="${escapeAttribute(src)}"${alt ? ` alt="${escapeAttribute(alt)}"` : ''}>`;
+			}
+			if (tag === 'iframe') {
+				const src = readAttribute(String(rawAttributes), 'src');
+				if (!src || !isSafeYoutubeEmbed(src)) return '';
+				return `<iframe src="${escapeAttribute(src)}">`;
+			}
+			return `<${tag}${style}>`;
 		})
 		.trim();
 }
