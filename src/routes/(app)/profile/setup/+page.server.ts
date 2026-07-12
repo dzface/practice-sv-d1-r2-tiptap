@@ -18,7 +18,8 @@ export const actions: Actions = {
 
 		const form = await request.formData();
 		const result = validateNickname(form.get('nickname'));
-		if (!result.ok) return fail(400, { message: result.message, nickname: String(form.get('nickname') ?? '') });
+		if (!result.ok)
+			return fail(400, { message: result.message, nickname: String(form.get('nickname') ?? '') });
 
 		const profiles = createProfileRepository(getDb(platform.env.DB));
 		if (await profiles.isNicknameTaken(result.nickname)) {

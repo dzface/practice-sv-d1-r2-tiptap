@@ -11,7 +11,7 @@
 	let { user }: { user: HeaderUser | null } = $props();
 </script>
 
-<header class="container box">
+<header class="box">
 	<a href={resolve('/')}><strong>{siteConfig.siteName}</strong></a>
 	<div class="header-actions">
 		<ThemeToggle />

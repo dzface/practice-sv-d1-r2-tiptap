@@ -120,7 +120,7 @@
 	<article class="box">
 		<p class="muted">{data.category.name}</p>
 		<h1>{data.post.title}</h1>
-		<p class="muted">
+		<p class="post-meta muted">
 			{data.post.authorName} · 조회 {data.post.viewCount} · 좋아요
 			{postVote.upvoteCount - postVote.downvoteCount}
 		</p>
@@ -226,6 +226,10 @@
 	.post-body {
 		margin-top: 2rem;
 		line-height: 1.75;
+	}
+
+	.post-meta {
+		text-align: right;
 	}
 
 	.post-body :global(pre) {

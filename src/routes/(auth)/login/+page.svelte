@@ -1,11 +1,12 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import type { ActionData, PageData } from './$types';
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
 
 <svelte:head><title>로그인 · 릴토끼</title></svelte:head>
 
-<main class="auth-page container">
+<main class="auth-page">
 	<section class="auth-box">
 		<h1>로그인</h1>
 		{#if data.googleEnabled}
@@ -18,12 +19,16 @@
 			<p class="muted">소셜 로그인 설정 전입니다.</p>
 		{/if}
 		{#if form?.message}<p class="form-error" role="alert">{form.message}</p>{/if}
+		<!-- <p class="muted"><a href={resolve('/(auth)/signup')}>회원가입</a></p> -->
 	</section>
 </main>
 
 <style>
 	.auth-page {
-		padding-block: 3rem;
+		height: 100dvh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 	.auth-box {
 		width: min(100%, 26rem);

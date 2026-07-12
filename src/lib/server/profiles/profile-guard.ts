@@ -9,5 +9,5 @@ export function shouldRedirectToProfileSetup({
 	hasProfile,
 	pathname
 }: ProfileGuardInput) {
-	return isLoggedIn && !hasProfile && pathname !== '/profile/setup';
+	return isLoggedIn && !hasProfile && pathname !== '/signup' && pathname !== '/profile/setup';
 }

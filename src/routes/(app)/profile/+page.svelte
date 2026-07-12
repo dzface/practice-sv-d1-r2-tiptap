@@ -48,11 +48,13 @@
 <section class="box profile danger">
 	<h2>회원탈퇴</h2>
 	<p class="muted">
-		계정, 소셜 로그인 연결, 세션, 프로필은 삭제됩니다. 기존 게시글은 작성 당시 닉네임으로 남습니다.
+		탈퇴 시 계정, 소셜 로그인 연결, 세션, 프로필은 삭제되며 남은 포인트는 소멸합니다. <br>
+		기존 게시글은 작성 당시 닉네임으로 남습니다.
 	</p>
+	
 	<form method="post" action="?/deleteAccount">
 		<label>
-			탈퇴하려면 아래에 <strong>탈퇴</strong> 입력
+			탈퇴하려면 아래에 "탈퇴"를 입력하세요.
 			<input name="confirm" autocomplete="off" />
 		</label>
 		{#if form?.form === 'delete'}<p class="message">{form.message}</p>{/if}

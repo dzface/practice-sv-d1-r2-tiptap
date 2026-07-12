@@ -1,35 +1,5 @@
+<script>
+	import Policy from "$lib/components/layout/Policy.svelte";
+</script>
 <svelte:head><title>운영정책 · 릴토끼</title></svelte:head>
-
-<h1>운영정책</h1>
-
-<section class="box">
-	<h2>게시물</h2>
-	<p>
-		회원은 자신이 작성한 게시글과 댓글에 책임을 집니다. 권리침해·개인정보 노출·불법 콘텐츠는 숨김
-		또는 삭제될 수 있습니다.
-	</p>
-</section>
-
-<section class="box">
-	<h2>추천과 이동</h2>
-	<p>
-		릴토끼 게시글은 순추천 점수가 기준에 도달하면 빅토끼 또는 릴토끼 워스트로 영구 이동하며 작성자의
-		수정·삭제가 잠깁니다.
-	</p>
-</section>
-
-<section class="box">
-	<h2>포인트</h2>
-	<p>
-		포인트는 활동 기록이며 첫 출시에서는 현금 환급, 양도 또는 외부 결제에 사용할 수 없습니다. 부정
-		적립은 취소될 수 있습니다.
-	</p>
-</section>
-
-<section class="box">
-	<h2>제재와 신고</h2>
-	<p>
-		관리자는 운영정책 위반 콘텐츠를 숨기거나 삭제할 수 있고, 운영자는 회원을 기간 또는 영구 정지할
-		수 있습니다.
-	</p>
-</section>
+<Policy/>

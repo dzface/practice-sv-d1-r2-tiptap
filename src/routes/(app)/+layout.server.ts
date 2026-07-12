@@ -21,7 +21,7 @@ export const load: LayoutServerLoad = async ({ locals, platform, url }) => {
 			pathname: url.pathname
 		})
 	) {
-		redirect(303, '/profile/setup');
+		redirect(303, '/signup');
 	}
 
 	return {
