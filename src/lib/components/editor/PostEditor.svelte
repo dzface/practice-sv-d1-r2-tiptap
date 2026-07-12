@@ -7,10 +7,22 @@
 	let { initialHtml = '', name = 'body' }: { initialHtml?: string; name?: string } = $props();
 
 	const headingLevels = [1, 2, 3, 4, 5, 6] as const;
-	const colors = ['#111827', '#dc2626', '#2563eb', '#16a34a', '#ca8a04'] as const;
+	const textColors = [
+		'#111827',
+		'#6b7280',
+		'#dc2626',
+		'#f97316',
+		'#ca8a04',
+		'#16a34a',
+		'#0891b2',
+		'#2563eb',
+		'#7c3aed',
+		'#db2777'
+	] as const;
 	const highlights = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fecdd3'] as const;
 	const fonts = ['system-ui', 'serif', 'monospace'] as const;
 	const fontSizes = ['14px', '16px', '20px', '28px'] as const;
+	const tableGrid = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
 	const TextStyle = Mark.create({
 		name: 'textStyle',
@@ -140,6 +152,12 @@
 	let html = $state('');
 	let characters = $state(0);
 	let words = $state(0);
+	let showColorPalette = $state(false);
+	let showTablePicker = $state(false);
+	let tableRows = $state(0);
+	let tableCols = $state(0);
+	let selectedFont = $state('');
+	let selectedFontSize = $state('');
 
 	function sync(editor: Editor) {
 		html = editor.getHTML();
@@ -176,14 +194,15 @@
 			.run();
 	}
 
-	function insertTable() {
-		editor
-			?.chain()
-			.focus()
-			.insertContent(
-				'<table><tbody><tr><th><p>제목</p></th><th><p>제목</p></th></tr><tr><td><p>내용</p></td><td><p>내용</p></td></tr></tbody></table>'
-			)
-			.run();
+	function insertTable(rows = 2, cols = 2) {
+		const body = Array.from({ length: rows }, (_, row) => {
+			const tag = row === 0 ? 'th' : 'td';
+			const cells = Array.from({ length: cols }, () => `<${tag}><p></p></${tag}>`).join('');
+			return `<tr>${cells}</tr>`;
+		}).join('');
+
+		editor?.chain().focus().insertContent(`<table><tbody>${body}</tbody></table>`).run();
+		showTablePicker = false;
 	}
 
 	function insertMention() {
@@ -198,6 +217,23 @@
 
 	function setStyle(style: string) {
 		editor?.chain().focus().setMark('textStyle', { style }).run();
+	}
+
+	function setTextColor(color: string) {
+		setStyle(`color:${color}`);
+		showColorPalette = false;
+	}
+
+	function selectFont(event: Event) {
+		const value = (event.currentTarget as HTMLSelectElement).value;
+		if (!value) return;
+		setStyle(`font-family:${value}`);
+	}
+
+	function selectFontSize(event: Event) {
+		const value = (event.currentTarget as HTMLSelectElement).value;
+		if (!value) return;
+		setStyle(`font-size:${value}`);
 	}
 
 	function setAlign(align: string) {
@@ -252,93 +288,159 @@
 </script>
 
 <div class="toolbar" aria-label="글쓰기 도구">
-	<button type="button" onclick={() => editor?.chain().focus().undo().run()}>되돌리기</button>
-	<button type="button" onclick={() => editor?.chain().focus().redo().run()}>다시실행</button>
-	<button
-		type="button"
-		class:active={editor?.isActive('bold')}
-		onclick={() => editor?.chain().focus().toggleBold().run()}>굵게</button
-	>
-	<button
-		type="button"
-		class:active={editor?.isActive('italic')}
-		onclick={() => editor?.chain().focus().toggleItalic().run()}>기울임</button
-	>
-	<button
-		type="button"
-		class:active={editor?.isActive('strike')}
-		onclick={() => editor?.chain().focus().toggleStrike().run()}>취소선</button
-	>
-	<button
-		type="button"
-		class:active={editor?.isActive('underline')}
-		onclick={() => editor?.chain().focus().toggleUnderline().run()}>밑줄</button
-	>
-	<button
-		type="button"
-		class:active={editor?.isActive('code')}
-		onclick={() => editor?.chain().focus().toggleCode().run()}>인라인코드</button
-	>
-	<button type="button" onclick={setLink}>링크</button>
-	<button type="button" onclick={() => editor?.chain().focus().unsetLink().run()}>링크해제</button>
-	<button type="button" onclick={() => editor?.chain().focus().toggleMark('subscript').run()}
-		>아래첨자</button
-	>
-	<button type="button" onclick={() => editor?.chain().focus().toggleMark('superscript').run()}
-		>위첨자</button
-	>
-	<button type="button" onclick={() => editor?.chain().focus().setParagraph().run()}>문단</button>
-	{#each headingLevels as level}
-		<button type="button" onclick={() => editor?.chain().focus().toggleHeading({ level }).run()}
-			>H{level}</button
+	<div class="toolbar-main">
+		<button type="button" onclick={() => editor?.chain().focus().undo().run()}>되돌리기</button>
+		<button type="button" onclick={() => editor?.chain().focus().redo().run()}>다시실행</button>
+		<button
+			type="button"
+			class:active={editor?.isActive('bold')}
+			onclick={() => editor?.chain().focus().toggleBold().run()}>굵게</button
 		>
-	{/each}
-	<button type="button" onclick={() => editor?.chain().focus().toggleBlockquote().run()}
-		>인용</button
-	>
-	<button type="button" onclick={() => editor?.chain().focus().toggleCodeBlock().run()}
-		>코드블록</button
-	>
-	<button type="button" onclick={() => editor?.chain().focus().setHardBreak().run()}>줄바꿈</button>
-	<button type="button" onclick={() => editor?.chain().focus().setHorizontalRule().run()}
-		>구분선</button
-	>
-	<button type="button" onclick={() => editor?.chain().focus().toggleBulletList().run()}
-		>글머리</button
-	>
-	<button type="button" onclick={() => editor?.chain().focus().toggleOrderedList().run()}
-		>번호</button
-	>
-	<button
-		type="button"
-		onclick={() =>
-			editor
-				?.chain()
-				.focus()
-				.insertContent('<ul data-type="taskList"><li data-type="taskItem"><p>할 일</p></li></ul>')
-				.run()}>할일</button
-	>
-	<button type="button" onclick={insertImage}>이미지</button>
-	<button type="button" onclick={insertYoutube}>유튜브</button>
-	<button type="button" onclick={insertTable}>표</button>
-	<button type="button" onclick={insertMention}>멘션</button>
-	{#each colors as color}
-		<button type="button" onclick={() => setStyle(`color:${color}`)}>색상 {color}</button>
-	{/each}
-	{#each highlights as color}
-		<button type="button" onclick={() => setStyle(`background-color:${color}`)}>형광 {color}</button
+		<button
+			type="button"
+			class:active={editor?.isActive('italic')}
+			onclick={() => editor?.chain().focus().toggleItalic().run()}>기울임</button
 		>
-	{/each}
-	{#each fonts as font}
-		<button type="button" onclick={() => setStyle(`font-family:${font}`)}>폰트 {font}</button>
-	{/each}
-	{#each fontSizes as size}
-		<button type="button" onclick={() => setStyle(`font-size:${size}`)}>크기 {size}</button>
-	{/each}
-	<button type="button" onclick={() => setAlign('left')}>왼쪽</button>
-	<button type="button" onclick={() => setAlign('center')}>가운데</button>
-	<button type="button" onclick={() => setAlign('right')}>오른쪽</button>
-	<button type="button" onclick={() => setAlign('justify')}>양끝</button>
+		<button
+			type="button"
+			class:active={editor?.isActive('strike')}
+			onclick={() => editor?.chain().focus().toggleStrike().run()}>취소선</button
+		>
+		<button
+			type="button"
+			class:active={editor?.isActive('underline')}
+			onclick={() => editor?.chain().focus().toggleUnderline().run()}>밑줄</button
+		>
+		<button
+			type="button"
+			class:active={editor?.isActive('code')}
+			onclick={() => editor?.chain().focus().toggleCode().run()}>인라인코드</button
+		>
+		<button type="button" onclick={setLink}>링크</button>
+		<button type="button" onclick={() => editor?.chain().focus().unsetLink().run()}>링크해제</button
+		>
+		<button type="button" onclick={() => editor?.chain().focus().toggleMark('subscript').run()}
+			>아래첨자</button
+		>
+		<button type="button" onclick={() => editor?.chain().focus().toggleMark('superscript').run()}
+			>위첨자</button
+		>
+		<button type="button" onclick={() => editor?.chain().focus().setParagraph().run()}>문단</button>
+		{#each headingLevels as level (level)}
+			<button type="button" onclick={() => editor?.chain().focus().toggleHeading({ level }).run()}
+				>H{level}</button
+			>
+		{/each}
+		<button type="button" onclick={() => editor?.chain().focus().toggleBlockquote().run()}
+			>인용</button
+		>
+		<button type="button" onclick={() => editor?.chain().focus().toggleCodeBlock().run()}
+			>코드블록</button
+		>
+		<button type="button" onclick={() => editor?.chain().focus().setHardBreak().run()}
+			>줄바꿈</button
+		>
+		<button type="button" onclick={() => editor?.chain().focus().setHorizontalRule().run()}
+			>구분선</button
+		>
+		<button type="button" onclick={() => editor?.chain().focus().toggleBulletList().run()}
+			>글머리</button
+		>
+		<button type="button" onclick={() => editor?.chain().focus().toggleOrderedList().run()}
+			>번호</button
+		>
+		<button
+			type="button"
+			onclick={() =>
+				editor
+					?.chain()
+					.focus()
+					.insertContent('<ul data-type="taskList"><li data-type="taskItem"><p>할 일</p></li></ul>')
+					.run()}>할일</button
+		>
+		<button type="button" onclick={insertImage}>이미지</button>
+		<button type="button" onclick={insertYoutube}>유튜브</button>
+		<span
+			class="table-picker-wrap"
+			role="group"
+			aria-label="표 삽입"
+			onmouseleave={() => ((tableRows = 0), (tableCols = 0))}
+		>
+			<button
+				type="button"
+				aria-expanded={showTablePicker}
+				onclick={() => (showTablePicker = !showTablePicker)}>표</button
+			>
+			{#if showTablePicker}
+				<span class="table-picker" role="dialog" aria-label="표 크기 선택">
+					<span class="table-picker-label">{tableRows || 0} x {tableCols || 0}</span>
+					<span class="table-picker-grid">
+						{#each tableGrid as row (row)}
+							{#each tableGrid as col (col)}
+								<button
+									type="button"
+									class:active={row <= tableRows && col <= tableCols}
+									aria-label={`${row}행 ${col}열 표 삽입`}
+									onmouseenter={() => ((tableRows = row), (tableCols = col))}
+									onclick={() => insertTable(row, col)}
+								></button>
+							{/each}
+						{/each}
+					</span>
+				</span>
+			{/if}
+		</span>
+		<button type="button" onclick={insertMention}>멘션</button>
+		<span class="palette-wrap">
+			<button
+				type="button"
+				aria-expanded={showColorPalette}
+				onclick={() => (showColorPalette = !showColorPalette)}>글자색</button
+			>
+			{#if showColorPalette}
+				<span class="palette" role="dialog" aria-label="글자색 선택">
+					{#each textColors as color (color)}
+						<button
+							type="button"
+							class="swatch"
+							style={`background-color:${color}`}
+							aria-label={`글자색 ${color}`}
+							onclick={() => setTextColor(color)}
+						></button>
+					{/each}
+				</span>
+			{/if}
+		</span>
+		{#each highlights as color (color)}
+			<button type="button" onclick={() => setStyle(`background-color:${color}`)}
+				>형광 {color}</button
+			>
+		{/each}
+		<button type="button" onclick={() => setAlign('left')}>왼쪽</button>
+		<button type="button" onclick={() => setAlign('center')}>가운데</button>
+		<button type="button" onclick={() => setAlign('right')}>오른쪽</button>
+		<button type="button" onclick={() => setAlign('justify')}>양끝</button>
+	</div>
+	<div class="toolbar-bottom">
+		<label>
+			글자체
+			<select bind:value={selectedFont} onchange={selectFont}>
+				<option value="">선택</option>
+				{#each fonts as font (font)}
+					<option value={font}>{font}</option>
+				{/each}
+			</select>
+		</label>
+		<label>
+			글자크기
+			<select bind:value={selectedFontSize} onchange={selectFontSize}>
+				<option value="">선택</option>
+				{#each fontSizes as size (size)}
+					<option value={size}>{size}</option>
+				{/each}
+			</select>
+		</label>
+	</div>
 </div>
 
 <div bind:this={element} class="editor" aria-label="본문"></div>
@@ -348,13 +450,104 @@
 <style>
 	.toolbar {
 		display: flex;
-		flex-wrap: wrap;
+		flex-direction: column;
 		gap: 0.5rem;
 		margin-block: 0.75rem;
 	}
 
+	.toolbar-main,
+	.toolbar-bottom {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.toolbar-bottom {
+		padding-top: 0.25rem;
+	}
+
+	.toolbar-bottom label {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
 	.toolbar button.active {
 		font-weight: 700;
+	}
+
+	.palette-wrap {
+		position: relative;
+		display: inline-flex;
+	}
+
+	.table-picker-wrap {
+		position: relative;
+		display: inline-flex;
+	}
+
+	.palette {
+		position: absolute;
+		z-index: 2;
+		top: calc(100% + 0.35rem);
+		left: 0;
+		display: grid;
+		grid-template-columns: repeat(5, 1.5rem);
+		gap: 0.35rem;
+		width: max-content;
+		padding: 0.5rem;
+		border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+		border-radius: 0.375rem;
+		background: Canvas;
+		box-shadow: 0 0.5rem 1.5rem color-mix(in srgb, currentColor 16%, transparent);
+	}
+
+	.table-picker {
+		position: absolute;
+		z-index: 2;
+		top: calc(100% + 0.35rem);
+		left: 0;
+		display: grid;
+		gap: 0.45rem;
+		width: max-content;
+		padding: 0.6rem;
+		border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+		border-radius: 0.375rem;
+		background: Canvas;
+		box-shadow: 0 0.5rem 1.5rem color-mix(in srgb, currentColor 16%, transparent);
+	}
+
+	.table-picker-label {
+		font-size: 0.85rem;
+		opacity: 0.75;
+	}
+
+	.table-picker-grid {
+		display: grid;
+		grid-template-columns: repeat(10, 1rem);
+		gap: 0.2rem;
+	}
+
+	.toolbar .table-picker-grid button {
+		width: 1rem;
+		height: 1rem;
+		padding: 0;
+		border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+		border-radius: 0.125rem;
+		background: transparent;
+	}
+
+	.toolbar .table-picker-grid button.active {
+		background: #2563eb;
+		border-color: #2563eb;
+	}
+
+	.toolbar .swatch {
+		width: 1.5rem;
+		height: 1.5rem;
+		padding: 0;
+		border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+		border-radius: 0.2rem;
 	}
 
 	.editor {
@@ -378,6 +571,47 @@
 	.editor :global(img),
 	.editor :global(iframe) {
 		max-width: 100%;
+	}
+
+	.editor :global(pre) {
+		position: relative;
+		margin-block: 1rem;
+		overflow: auto;
+		border-radius: 0.4rem;
+		background: #252a33;
+		color: #e5e7eb;
+		padding: 3.5rem 1.25rem 1rem;
+		font-size: 0.95rem;
+		line-height: 1.7;
+	}
+
+	.editor :global(pre)::before {
+		content: '';
+		position: absolute;
+		inset: 0 0 auto;
+		height: 3rem;
+		background:
+			radial-gradient(circle at 1.4rem 50%, #ff5f56 0 0.38rem, transparent 0.42rem),
+			radial-gradient(circle at 2.9rem 50%, #ffbd2e 0 0.38rem, transparent 0.42rem),
+			radial-gradient(circle at 4.4rem 50%, #27c93f 0 0.38rem, transparent 0.42rem), #373a45;
+	}
+
+	.editor :global(pre)::after {
+		content: 'CODE';
+		position: absolute;
+		top: 0.85rem;
+		right: 1rem;
+		color: #facc15;
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0;
+	}
+
+	.editor :global(pre code) {
+		position: relative;
+		display: block;
+		color: inherit;
+		background: transparent;
 	}
 
 	.editor :global(table) {

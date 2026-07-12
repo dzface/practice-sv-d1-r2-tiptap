@@ -228,6 +228,59 @@
 		line-height: 1.75;
 	}
 
+	.post-body :global(pre) {
+		position: relative;
+		margin-block: 1rem;
+		overflow: auto;
+		border-radius: 0.4rem;
+		background: #252a33;
+		color: #e5e7eb;
+		padding: 3.5rem 1.25rem 1rem;
+		font-size: 0.95rem;
+		line-height: 1.7;
+		white-space: pre;
+	}
+
+	.post-body :global(pre)::before {
+		content: '';
+		position: absolute;
+		inset: 0 0 auto;
+		height: 3rem;
+		background:
+			radial-gradient(circle at 1.4rem 50%, #ff5f56 0 0.38rem, transparent 0.42rem),
+			radial-gradient(circle at 2.9rem 50%, #ffbd2e 0 0.38rem, transparent 0.42rem),
+			radial-gradient(circle at 4.4rem 50%, #27c93f 0 0.38rem, transparent 0.42rem), #373a45;
+	}
+
+	.post-body :global(pre)::after {
+		content: 'CODE';
+		position: absolute;
+		top: 0.85rem;
+		right: 1rem;
+		color: #facc15;
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0;
+	}
+
+	.post-body :global(pre code) {
+		position: relative;
+		display: block;
+		color: inherit;
+		background: transparent;
+	}
+
+	.post-body :global(table) {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	.post-body :global(th),
+	.post-body :global(td) {
+		border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+		padding: 0.5rem;
+	}
+
 	form {
 		display: grid;
 		gap: 0.75rem;
