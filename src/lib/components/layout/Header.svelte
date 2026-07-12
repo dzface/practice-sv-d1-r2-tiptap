@@ -1,18 +1,20 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import type { CategoryGroup } from '$lib/categories/category';
+	import Nav from '$lib/components/layout/Nav.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
-	import { siteConfig } from '$lib/config/site.config';
 
 	type HeaderUser = {
 		name: string;
 		profile: { nickname: string } | null;
 	};
 
-	let { user }: { user: HeaderUser | null } = $props();
+	let { groups, user }: { groups: CategoryGroup[]; user: HeaderUser | null } = $props();
 </script>
 
-<header class="box">
-	<a href={resolve('/')}><strong>{siteConfig.siteName}</strong></a>
+<header>
+	<a class="logo" href={resolve('/')}><strong>Lil-tokki</strong></a>
+	<Nav {groups} />
 	<div class="header-actions">
 		<ThemeToggle />
 		{#if user}
@@ -31,16 +33,38 @@
 </header>
 
 <style>
+	.logo{
+		font-size: 1.5rem;
+	}
 	header {
 		display: flex;
+		align-items: center;
 		justify-content: space-between;
 		gap: 1rem;
+		padding-block: 1rem;
+		border-bottom: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+	}
+
+	header > :global(.board-nav) {
+		flex: 1;
 	}
 
 	.header-actions {
 		display: flex;
+		flex: none;
 		align-items: center;
 		gap: 0.75rem;
+	}
+
+	@media (max-width: 48rem) {
+		header {
+			flex-wrap: wrap;
+		}
+
+		header > :global(.board-nav) {
+			order: 3;
+			flex-basis: 100%;
+		}
 	}
 
 	.profile-link {

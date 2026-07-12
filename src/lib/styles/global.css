@@ -48,7 +48,7 @@ textarea {
 
 .advertisement {
 	flex: 0 0 12rem;
-	background-color: aqua;
+	background-color:ghostwhite
 }
 
 @media (max-width: 52rem) {
@@ -72,7 +72,8 @@ textarea {
 }
 
 .site-main {
-	min-height: 65vh;
+	padding: 0 8rem;
+	min-height: 80vh;
 }
 
 .muted {

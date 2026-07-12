@@ -20,6 +20,8 @@
 	}
 
 	footer {
+		border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
 		justify-content: space-between;
+		margin: 1rem 0 0 0;
 	}
 </style>

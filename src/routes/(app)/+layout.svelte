@@ -2,7 +2,6 @@
 	import Aside from '$lib/components/layout/Aside.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
 	import Header from '$lib/components/layout/Header.svelte';
-	import Nav from '$lib/components/layout/Nav.svelte';
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
@@ -12,12 +11,7 @@
 	<Aside />
 	<div class="site-content">
 		<div class="container">
-			<Header user={data.user} />
-		</div>
-		<div class="container">
-			<div class="box">
-				<Nav groups={data.categoryGroups} />
-			</div>
+			<Header groups={data.categoryGroups} user={data.user} />
 		</div>
 		<main class="site-main">
 			<div class="container">{@render children()}</div>

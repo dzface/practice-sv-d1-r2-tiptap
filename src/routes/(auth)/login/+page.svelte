@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import type { ActionData, PageData } from './$types';
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
