@@ -1,6 +1,6 @@
 {
 	"$schema": "./node_modules/wrangler/config-schema.json",
-	"name": "practice-sv-d1-r2-titap",
+	"name": "practice-sv-d1-r2-tiptap",
 	"compatibility_date": "2026-07-05",
 	"compatibility_flags": ["nodejs_compat"],
 	"main": ".svelte-kit/cloudflare/_worker.js",
