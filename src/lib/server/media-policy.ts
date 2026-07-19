@@ -50,6 +50,20 @@ function parseEntries(value: FormDataEntryValue | null) {
 	);
 }
 
+function replaceFirstBlobMedia(body: string, type: string, url: string) {
+	if (type.startsWith('image/')) {
+		return body.replace(
+			/<img\b([^>]*?)src=(["'])blob:[\s\S]*?\2([^>]*)>/i,
+			`<img$1src="${url}"$3>`
+		);
+	}
+
+	return body.replace(
+		/<video\b([^>]*?)src=(["'])blob:[\s\S]*?\2([^>]*)><\/video>/i,
+		`<video$1src="${url}"$3></video>`
+	);
+}
+
 export async function resolvePostAttachments({
 	body,
 	bucket,
@@ -89,7 +103,10 @@ export async function resolvePostAttachments({
 		});
 
 		const url = mediaUrl(key);
+		const previousBody = resolvedBody;
 		if (entry.url) resolvedBody = resolvedBody.split(String(entry.url)).join(url);
+		if (resolvedBody === previousBody)
+			resolvedBody = replaceFirstBlobMedia(resolvedBody, file.type, url);
 		if (entry.listed !== false) attachments.push({ key, name, type: file.type, size: file.size });
 	}
 

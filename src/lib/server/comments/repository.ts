@@ -1,5 +1,5 @@
-import { and, asc, eq } from 'drizzle-orm';
-import { commentVotes, comments } from '$lib/server/db/schema';
+import { and, asc, eq, inArray } from 'drizzle-orm';
+import { commentVotes, comments, profiles } from '$lib/server/db/schema';
 import type { getDb } from '$lib/server/db';
 import { applyVote, type VoteValue } from '$lib/server/content-actions';
 
@@ -11,11 +11,13 @@ export function createCommentRepository(db: Db) {
 			postId,
 			authorId,
 			authorName,
+			parentCommentId,
 			body
 		}: {
 			postId: string;
 			authorId: string;
 			authorName: string;
+			parentCommentId?: string | null;
 			body: string;
 		}) => {
 			await db.insert(comments).values({
@@ -23,6 +25,7 @@ export function createCommentRepository(db: Db) {
 				postId,
 				authorId,
 				authorName,
+				parentCommentId,
 				body,
 				status: 'public',
 				createdAt: new Date(),
@@ -36,14 +39,33 @@ export function createCommentRepository(db: Db) {
 					id: comments.id,
 					authorId: comments.authorId,
 					authorName: comments.authorName,
+					authorPoints: profiles.points,
+					parentCommentId: comments.parentCommentId,
 					body: comments.body,
 					upvoteCount: comments.upvoteCount,
 					downvoteCount: comments.downvoteCount,
+					status: comments.status,
 					createdAt: comments.createdAt
 				})
 				.from(comments)
-				.where(and(eq(comments.postId, postId), eq(comments.status, 'public')))
+				.leftJoin(profiles, eq(profiles.userId, comments.authorId))
+				.where(and(eq(comments.postId, postId), inArray(comments.status, ['public', 'deleted'])))
 				.orderBy(asc(comments.createdAt)),
+
+		findPublicInPost: async ({ commentId, postId }: { commentId: string; postId: string }) => {
+			const [comment] = await db
+				.select({ id: comments.id, authorName: comments.authorName })
+				.from(comments)
+				.where(
+					and(
+						eq(comments.id, commentId),
+						eq(comments.postId, postId),
+						eq(comments.status, 'public')
+					)
+				)
+				.limit(1);
+			return comment ?? null;
+		},
 
 		updateOwned: async ({
 			commentId,
@@ -54,6 +76,13 @@ export function createCommentRepository(db: Db) {
 			authorId: string;
 			body: string;
 		}) => {
+			const [reply] = await db
+				.select({ id: comments.id })
+				.from(comments)
+				.where(and(eq(comments.parentCommentId, commentId), eq(comments.status, 'public')))
+				.limit(1);
+			if (reply) return false;
+
 			const updated = await db
 				.update(comments)
 				.set({ body, updatedAt: new Date() })

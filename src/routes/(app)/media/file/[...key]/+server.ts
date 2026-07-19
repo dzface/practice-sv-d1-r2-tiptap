@@ -12,7 +12,8 @@ export const GET: RequestHandler = async ({ params, platform, url }) => {
 	if (!object) error(404, '파일을 찾을 수 없습니다.');
 
 	const headers = new Headers();
-	object.writeHttpMetadata(headers);
+	if (object.httpMetadata?.contentType)
+		headers.set('content-type', object.httpMetadata.contentType);
 	headers.set('etag', object.httpEtag);
 	headers.set('cache-control', 'public, max-age=31536000, immutable');
 

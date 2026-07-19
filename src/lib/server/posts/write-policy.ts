@@ -133,7 +133,14 @@ export function sanitizePostBody(html: string) {
 			if (tag === 'iframe') {
 				const src = readAttribute(String(rawAttributes), 'src');
 				if (!src || !isSafeYoutubeEmbed(src)) return '';
-				return `<iframe src="${escapeAttribute(src)}">`;
+				const width = readAttribute(String(rawAttributes), 'width');
+				const height = readAttribute(String(rawAttributes), 'height');
+				const title = readAttribute(String(rawAttributes), 'title');
+				const frameborder = readAttribute(String(rawAttributes), 'frameborder');
+				const allow = readAttribute(String(rawAttributes), 'allow');
+				const referrerpolicy = readAttribute(String(rawAttributes), 'referrerpolicy');
+				const allowfullscreen = readAttribute(String(rawAttributes), 'allowfullscreen');
+				return `<iframe src="${escapeAttribute(src)}"${width ? ` width="${escapeAttribute(width)}"` : ''}${height ? ` height="${escapeAttribute(height)}"` : ''}${title ? ` title="${escapeAttribute(title)}"` : ''}${frameborder ? ` frameborder="${escapeAttribute(frameborder)}"` : ''}${allow ? ` allow="${escapeAttribute(allow)}"` : ''}${referrerpolicy ? ` referrerpolicy="${escapeAttribute(referrerpolicy)}"` : ''}${allowfullscreen !== null ? ' allowfullscreen="true"' : ''}>`;
 			}
 			return `<${tag}${style}>`;
 		})

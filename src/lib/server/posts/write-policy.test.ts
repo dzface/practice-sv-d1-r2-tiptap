@@ -43,7 +43,17 @@ describe('post write policy', () => {
 				'<p style="text-align:center;color:red">text</p><u>u</u><sub>2</sub><sup>3</sup><hr><img src="/media/file/uploads/u/a.png" onerror="alert(1)" alt="a"><video src="/media/file/uploads/u/a.mp4" autoplay></video><iframe src="https://www.youtube.com/embed/abc123" width="1"></iframe><table><tbody><tr><th>h</th><td>x</td></tr></tbody></table><span style="color:#ff0000;background-color:yellow;font-family:serif;font-size:18px;position:absolute">s</span>'
 			)
 		).toBe(
-			'<p style="text-align:center;color:red">text</p><u>u</u><sub>2</sub><sup>3</sup><hr><img src="/media/file/uploads/u/a.png" alt="a"><video controls src="/media/file/uploads/u/a.mp4"></video><iframe src="https://www.youtube.com/embed/abc123"></iframe><table><tbody><tr><th>h</th><td>x</td></tr></tbody></table><span style="color:#ff0000;background-color:yellow;font-family:serif;font-size:18px">s</span>'
+			'<p style="text-align:center;color:red">text</p><u>u</u><sub>2</sub><sup>3</sup><hr><img src="/media/file/uploads/u/a.png" alt="a"><video controls src="/media/file/uploads/u/a.mp4"></video><iframe src="https://www.youtube.com/embed/abc123" width="1" allowfullscreen="true"></iframe><table><tbody><tr><th>h</th><td>x</td></tr></tbody></table><span style="color:#ff0000;background-color:yellow;font-family:serif;font-size:18px">s</span>'
+		);
+	});
+
+	it('keeps safe YouTube iframe attributes', () => {
+		expect(
+			sanitizePostBody(
+				'<iframe width="560" height="315" src="https://www.youtube.com/embed/hyNHV6B65XY?si=xvc9URlnqI77R1sB" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
+			)
+		).toBe(
+			'<iframe src="https://www.youtube.com/embed/hyNHV6B65XY?si=xvc9URlnqI77R1sB" width="560" height="315" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="true"></iframe>'
 		);
 	});
 });

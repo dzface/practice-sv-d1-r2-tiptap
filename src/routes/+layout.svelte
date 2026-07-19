@@ -1,5 +1,5 @@
 <script lang="ts">
-	import favicon from '$lib/assets/favicon.svg';
+	import favicon from '$lib/assets/favicon.png';
 	import { siteConfig } from '$lib/config/site.config';
 	import '$lib/styles/global.css';
 

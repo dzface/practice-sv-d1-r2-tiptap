@@ -69,6 +69,22 @@
 		gap: 1rem;
 	}
 
+	.actions :is(a, button) {
+		display: inline-flex;
+		min-height: 2rem;
+		align-items: center;
+		justify-content: center;
+		padding: 0.35rem 0.75rem;
+		border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+		border-radius: 0.25rem;
+		background: ButtonFace;
+		color: ButtonText;
+		font: inherit;
+		line-height: 1;
+		text-decoration: none;
+		cursor: pointer;
+	}
+
 	.error {
 		color: #b42318;
 	}

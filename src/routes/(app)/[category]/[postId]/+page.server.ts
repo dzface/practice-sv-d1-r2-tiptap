@@ -83,10 +83,28 @@ export const actions: Actions = {
 				body: String(form.get('body') ?? '')
 			});
 
-		await createCommentRepository(db).create({
+		const commentRepository = createCommentRepository(db);
+		const parentCommentId = String(form.get('parentCommentId') ?? '');
+		const parentComment = parentCommentId
+			? await commentRepository.findPublicInPost({
+					commentId: parentCommentId,
+					postId: params.postId
+				})
+			: null;
+		if (parentCommentId && !parentComment) {
+			return fail(400, {
+				form: 'createComment',
+				message: '답글을 달 댓글을 찾을 수 없습니다.',
+				body: input.body,
+				parentCommentId
+			});
+		}
+
+		await commentRepository.create({
 			postId: params.postId,
 			authorId: locals.user!.id,
 			authorName: profile.nickname,
+			parentCommentId: parentComment?.id ?? null,
 			body: input.body
 		});
 

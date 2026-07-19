@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import { Editor, Extension, Mark, Node as TiptapNode, mergeAttributes } from '@tiptap/core';
+	import type { NodeViewRendererProps } from '@tiptap/core';
 	import Link from '@tiptap/extension-link';
 	import StarterKit from '@tiptap/starter-kit';
 
@@ -95,6 +96,88 @@
 		}
 	});
 
+	function mergeImageWidth(styleText: string | null, width: number) {
+		const style = document.createElement('span').style;
+		if (styleText) style.cssText = styleText;
+		style.setProperty('width', `${Math.max(80, Math.round(width))}px`);
+		return style.cssText;
+	}
+
+	function imageNodeView({ node, editor, getPos }: NodeViewRendererProps) {
+		let currentNode = node;
+		let startX = 0;
+		let startWidth = 0;
+		const dom = document.createElement('span');
+		const img = document.createElement('img');
+		const handle = document.createElement('span');
+
+		dom.className = 'resizable-image';
+		dom.contentEditable = 'false';
+		handle.className = 'material-symbols-outlined image-resize-handle';
+		handle.contentEditable = 'false';
+		handle.textContent = 'open_in_full';
+		dom.appendChild(img);
+		dom.appendChild(handle);
+
+		function render() {
+			img.src = String(currentNode.attrs.src ?? '');
+			img.alt = String(currentNode.attrs.alt ?? '');
+			img.style.cssText = String(currentNode.attrs.style ?? '');
+		}
+
+		function saveWidth(width: number) {
+			const pos = getPos();
+			if (typeof pos !== 'number') return;
+			editor.view.dispatch(
+				editor.view.state.tr.setNodeMarkup(pos, undefined, {
+					...currentNode.attrs,
+					style: mergeImageWidth(String(currentNode.attrs.style ?? ''), width)
+				})
+			);
+		}
+
+		function move(event: MouseEvent) {
+			const editorWidth = editor.view.dom.getBoundingClientRect().width;
+			const width = Math.min(editorWidth, Math.max(80, startWidth + event.clientX - startX));
+			img.style.width = `${Math.round(width)}px`;
+		}
+
+		function stop() {
+			document.removeEventListener('mousemove', move);
+			document.removeEventListener('mouseup', stop);
+			saveWidth(img.getBoundingClientRect().width);
+		}
+
+		handle.addEventListener('mousedown', (event) => {
+			event.preventDefault();
+			startX = event.clientX;
+			startWidth = img.getBoundingClientRect().width;
+			document.addEventListener('mousemove', move);
+			document.addEventListener('mouseup', stop);
+		});
+
+		render();
+		return {
+			dom,
+			update(nextNode: typeof node) {
+				if (nextNode.type.name !== 'image') return false;
+				currentNode = nextNode;
+				render();
+				return true;
+			},
+			selectNode() {
+				dom.classList.add('selected');
+			},
+			deselectNode() {
+				dom.classList.remove('selected');
+			},
+			destroy() {
+				document.removeEventListener('mousemove', move);
+				document.removeEventListener('mouseup', stop);
+			}
+		};
+	}
+
 	const Image = TiptapNode.create({
 		name: 'image',
 		group: 'block',
@@ -111,7 +194,10 @@
 			};
 		},
 		parseHTML: () => [{ tag: 'img[src]' }],
-		renderHTML: ({ HTMLAttributes }) => ['img', mergeAttributes(HTMLAttributes)]
+		renderHTML: ({ HTMLAttributes }) => ['img', mergeAttributes(HTMLAttributes)],
+		addNodeView() {
+			return imageNodeView;
+		}
 	});
 
 	const Youtube = TiptapNode.create({
@@ -119,7 +205,16 @@
 		group: 'block',
 		atom: true,
 		addAttributes() {
-			return { src: { default: null } };
+			return {
+				src: { default: null },
+				width: { default: null },
+				height: { default: null },
+				title: { default: null },
+				frameborder: { default: null },
+				allow: { default: null },
+				referrerpolicy: { default: null },
+				allowfullscreen: { default: true }
+			};
 		},
 		parseHTML: () => [{ tag: 'iframe[src*="youtube.com/embed"]' }],
 		renderHTML: ({ HTMLAttributes }) => [
@@ -356,22 +451,6 @@
 		);
 	}
 
-	function persistImageSize(event: MouseEvent) {
-		if (!editor || !(event.target instanceof HTMLImageElement)) return;
-		const width = Math.round(event.target.getBoundingClientRect().width);
-		if (!Number.isFinite(width) || width <= 0) return;
-		const pos = editor.view.posAtDOM(event.target, 0);
-		const node = editor.view.state.doc.nodeAt(pos);
-		if (node?.type.name !== 'image') return;
-		editor.view.dispatch(
-			editor.view.state.tr.setNodeMarkup(pos, undefined, {
-				...node.attrs,
-				style: `width:${width}px`
-			})
-		);
-		sync(editor);
-	}
-
 	function insertTable(rows = 2, cols = 2) {
 		const body = Array.from({ length: rows }, (_, row) => {
 			const tag = row === 0 ? 'th' : 'td';
@@ -473,13 +552,11 @@
 		autosaveTimer = setInterval(saveDraft, 5 * 60 * 1000);
 		submitForm = element.closest('form');
 		submitForm?.addEventListener('submit', clearDraft);
-		element.addEventListener('mouseup', persistImageSize);
 	});
 
 	onDestroy(() => {
 		if (autosaveTimer) clearInterval(autosaveTimer);
 		submitForm?.removeEventListener('submit', clearDraft);
-		element?.removeEventListener('mouseup', persistImageSize);
 		editor?.destroy();
 		for (const attachment of attachments) {
 			if (!attachment.key) URL.revokeObjectURL(attachment.url);
@@ -489,71 +566,77 @@
 
 <div class="toolbar" aria-label="글쓰기 도구">
 	<div class="toolbar-main">
-		<button
-			type="button"
-			title="되돌리기"
-			aria-label="되돌리기"
-			onclick={() => editor?.chain().focus().undo().run()}
-			><span class="material-symbols-outlined" aria-hidden="true">undo</span></button
-		>
-		<button
-			type="button"
-			title="다시실행"
-			aria-label="다시실행"
-			onclick={() => editor?.chain().focus().redo().run()}
-			><span class="material-symbols-outlined" aria-hidden="true">redo</span></button
-		>
-		<button type="button" title={isHtmlMode ? '편집' : 'HTML 수정'} onclick={toggleHtmlMode}>
-			{isHtmlMode ? '편집' : ''}
-			<span class="material-symbols-outlined"> html </span>
+			<button type="button" title={isHtmlMode ? '글 편집' : 'HTML 수정'} onclick={toggleHtmlMode}>
+			{isHtmlMode ? '' : ''}
+			<span class="material-symbols-outlined">
+		{isHtmlMode ? 'edit' : 'html'}
+	</span>
 		</button>
-		<button
-			type="button"
-			title="이미지 첨부"
-			aria-label="이미지 첨부"
-			onclick={() => chooseFile('image/*')}
-			><span class="material-symbols-outlined" aria-hidden="true">image</span></button
-		>
-		<button
-			type="button"
-			title="동영상 첨부"
-			aria-label="동영상 첨부"
-			onclick={() => chooseFile('video/*')}
-			><span class="material-symbols-outlined" aria-hidden="true">movie</span></button
-		>
-		<span
-			class="table-picker-wrap"
-			role="group"
-			aria-label="표 삽입"
-			onmouseleave={() => ((tableRows = 0), (tableCols = 0))}
-		>
+		{#if !isHtmlMode}
 			<button
 				type="button"
-				aria-expanded={showTablePicker}
-				title="표"
-				aria-label="표"
-				onclick={() => (showTablePicker = !showTablePicker)}
-				><span class="material-symbols-outlined" aria-hidden="true">table</span></button
+				title="되돌리기"
+				aria-label="되돌리기"
+				onclick={() => editor?.chain().focus().undo().run()}
+				><span class="material-symbols-outlined" aria-hidden="true">undo</span></button
 			>
-			{#if showTablePicker}
-				<span class="table-picker" role="dialog" aria-label="표 크기 선택">
-					<span class="table-picker-label">{tableRows || 0} x {tableCols || 0}</span>
-					<span class="table-picker-grid">
-						{#each tableGrid as row (row)}
-							{#each tableGrid as col (col)}
-								<button
-									type="button"
-									class:active={row <= tableRows && col <= tableCols}
-									aria-label={`${row}행 ${col}열 표 삽입`}
-									onmouseenter={() => ((tableRows = row), (tableCols = col))}
-									onclick={() => insertTable(row, col)}
-								></button>
+			<button
+				type="button"
+				title="다시실행"
+				aria-label="다시실행"
+				onclick={() => editor?.chain().focus().redo().run()}
+				><span class="material-symbols-outlined" aria-hidden="true">redo</span></button
+			>
+		{/if}
+		{#if !isHtmlMode}
+			<button
+				type="button"
+				title="이미지 첨부"
+				aria-label="이미지 첨부"
+				onclick={() => chooseFile('image/*')}
+				><span class="material-symbols-outlined" aria-hidden="true">image</span></button
+			>
+			<button
+				type="button"
+				title="동영상 첨부"
+				aria-label="동영상 첨부"
+				onclick={() => chooseFile('video/*')}
+				><span class="material-symbols-outlined" aria-hidden="true">movie</span></button
+			>
+			<span
+				class="table-picker-wrap"
+				role="group"
+				aria-label="표 삽입"
+				onmouseleave={() => ((tableRows = 0), (tableCols = 0))}
+			>
+				<button
+					type="button"
+					aria-expanded={showTablePicker}
+					title="표"
+					aria-label="표"
+					onclick={() => (showTablePicker = !showTablePicker)}
+					><span class="material-symbols-outlined" aria-hidden="true">table</span></button
+				>
+				{#if showTablePicker}
+					<span class="table-picker" role="dialog" aria-label="표 크기 선택">
+						<span class="table-picker-label">{tableRows || 0} x {tableCols || 0}</span>
+						<span class="table-picker-grid">
+							{#each tableGrid as row (row)}
+								{#each tableGrid as col (col)}
+									<button
+										type="button"
+										class:active={row <= tableRows && col <= tableCols}
+										aria-label={`${row}행 ${col}열 표 삽입`}
+										onmouseenter={() => ((tableRows = row), (tableCols = col))}
+										onclick={() => insertTable(row, col)}
+									></button>
+								{/each}
 							{/each}
-						{/each}
+						</span>
 					</span>
-				</span>
-			{/if}
-		</span>
+				{/if}
+			</span>
+		{/if}
 	</div>
 
 	{#if !isHtmlMode}
@@ -903,12 +986,46 @@
 		max-width: 100%;
 	}
 
-	.editor :global(img) {
+	.editor :global(.resizable-image) {
+		position: relative;
+		display: inline-block;
+		max-width: 100%;
+		line-height: 0;
+	}
+
+	.editor :global(.resizable-image img) {
 		display: block;
-		overflow: auto;
-		resize: both;
-		min-width: 4rem;
-		min-height: 4rem;
+		min-width: 5rem;
+		max-width: 100%;
+	}
+
+	.editor :global(.resizable-image.selected) {
+		outline: 0.1px solid #9ca3af;
+		outline-offset: 0.25rem;
+	}
+
+	.editor :global(.image-resize-handle) {
+		position: absolute;
+		right: -0.75rem;
+		bottom: -0.75rem;
+		display: none;
+		width: 1.7rem;
+		height: 1.7rem;
+		align-items: center;
+		justify-content: center;
+		border: 0.1px solid #9ca3af;
+		border-radius: 999px;
+		background: white;
+		color: #4b5563;
+		box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 28%, transparent);
+		cursor: nwse-resize;
+		font-size: 1rem;
+		line-height: 1;
+		user-select: none;
+	}
+
+	.editor :global(.resizable-image.selected .image-resize-handle) {
+		display: inline-flex;
 	}
 
 	.editor :global(pre) {

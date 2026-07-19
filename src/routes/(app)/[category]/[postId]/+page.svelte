@@ -50,6 +50,11 @@
 
 	let postVote = $state<VoteState>(initialPostVote());
 	let commentVotes = $state<Record<string, VoteState>>(initialCommentVotes());
+	let threadedComments = $derived(orderComments(data.comments));
+	let publicCommentCount = $derived(
+		data.comments.filter((comment) => comment.status === 'public').length
+	);
+	let failedReplyParentId = $derived(getFailedReplyParentId());
 
 	function voteValue(value: StoredVoteValue) {
 		if (value === null) return 'none';
@@ -112,6 +117,91 @@
 
 	function editCommentHref(commentId: string) {
 		return `${postHref()}?editComment=${commentId}`;
+	}
+
+	function getFailedReplyParentId() {
+		if (form?.form !== 'createComment') return '';
+		return 'parentCommentId' in form ? String(form.parentCommentId ?? '') : '';
+	}
+
+	function relativeTime(value: Date | string) {
+		const date = new Date(value);
+		const diffMinutes = Math.max(0, Math.floor((Date.now() - date.getTime()) / (1000 * 60)));
+		if (diffMinutes <= 1) return '방금 전';
+		if (diffMinutes <= 60) return `${Math.ceil(diffMinutes / 10) * 10}분 전`;
+
+		const diffHours = Math.floor(diffMinutes / 60);
+		if (diffHours < 24) return `${diffHours}시간 전`;
+
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, '0');
+		const day = String(date.getDate()).padStart(2, '0');
+		return `${year}.${month}.${day}`;
+	}
+
+	function levelFor(points: number | null) {
+		const value = points ?? 0;
+		if (value >= 1500) return 5;
+		if (value >= 700) return 4;
+		if (value >= 300) return 3;
+		if (value >= 100) return 2;
+		return 1;
+	}
+
+	function levelSrc(points: number | null) {
+		return `/levels/level-${levelFor(points)}.svg`;
+	}
+
+	function orderComments(comments: typeof data.comments) {
+		const byId = new Map(comments.map((comment) => [comment.id, comment]));
+		const children = new Map<string, typeof comments>();
+		for (const comment of comments) {
+			if (!comment.parentCommentId) continue;
+			children.set(comment.parentCommentId, [
+				...(children.get(comment.parentCommentId) ?? []),
+				comment
+			]);
+		}
+
+		const ordered: Array<
+			(typeof comments)[number] & {
+				replyToAuthorName: string | null;
+				replyToAuthorPoints: number | null;
+				replyToCreatedAt: Date | null;
+				hasReplies: boolean;
+			}
+		> = [];
+
+		function isVisible(comment: (typeof comments)[number]): boolean {
+			return (
+				comment.status === 'public' ||
+				Boolean(children.get(comment.id)?.some((child) => isVisible(child)))
+			);
+		}
+
+		function append(
+			comment: (typeof comments)[number],
+			replyToAuthorName: string | null,
+			replyToAuthorPoints: number | null,
+			replyToCreatedAt: Date | null
+		) {
+			ordered.push({
+				...comment,
+				replyToAuthorName,
+				replyToAuthorPoints,
+				replyToCreatedAt,
+				hasReplies: Boolean(children.get(comment.id)?.length)
+			});
+			for (const child of children.get(comment.id) ?? [])
+				if (isVisible(child))
+					append(child, comment.authorName, comment.authorPoints, comment.createdAt);
+		}
+
+		for (const comment of comments) {
+			if ((!comment.parentCommentId || !byId.has(comment.parentCommentId)) && isVisible(comment))
+				append(comment, null, null, null);
+		}
+		return ordered;
 	}
 
 	beforeNavigate(flushVotes);
@@ -179,68 +269,127 @@
 <section class="box vote-bar" aria-label="게시글 투표">
 	<div class="actions">
 		<button
+			class="vote-button"
 			type="button"
 			aria-pressed={postVote.vote === 1}
 			onclick={() => applyClientVote(postVote, 1)}
 		>
-			좋아요 {postVote.upvoteCount}
+			<span>👍 좋아요</span>
+			<strong class="up-count">{postVote.upvoteCount}</strong>
 		</button>
 		<button
+			class="vote-button"
 			type="button"
 			aria-pressed={postVote.vote === -1}
 			onclick={() => applyClientVote(postVote, -1)}
 		>
-			싫어요 {postVote.downvoteCount}
+			<span>👎 싫어요</span>
+			<strong class="down-count">{postVote.downvoteCount}</strong>
 		</button>
 	</div>
 	{#if postVote.message}<p class="vote-message">{postVote.message}</p>{/if}
 </section>
 
 <section class="box">
-	<h2>댓글 {data.comments.length}</h2>
-	{#each data.comments as comment (comment.id)}
+	<h2>댓글 {publicCommentCount}</h2>
+	{#each threadedComments as comment (comment.id)}
 		{@const editingComment = data.editCommentId === comment.id}
-		<article class="comment item">
-			<p class="muted">{comment.authorName}</p>
-			{#if editingComment && comment.canManage}
-				<form method="POST" action="?/updateComment">
-					<input type="hidden" name="commentId" value={comment.id} />
-					<textarea name="body" rows="4" maxlength="1000">{comment.body}</textarea>
-					{#if form?.form === 'updateComment'}<p class="error">{form.message}</p>{/if}
-					<div class="actions">
-						<button type="submit">수정 완료</button>
-						<a href={postHref()}>취소</a>
-					</div>
-				</form>
-			{:else}
-				<p>{comment.body}</p>
-				<div class="actions comment-actions">
-					<button
-						type="button"
-						aria-pressed={commentVotes[comment.id]?.vote === 1}
-						onclick={() => applyClientVote(commentVotes[comment.id], 1)}
-					>
-						좋아요 {commentVotes[comment.id]?.upvoteCount ?? comment.upvoteCount}
-					</button>
-					<button
-						type="button"
-						aria-pressed={commentVotes[comment.id]?.vote === -1}
-						onclick={() => applyClientVote(commentVotes[comment.id], -1)}
-					>
-						싫어요 {commentVotes[comment.id]?.downvoteCount ?? comment.downvoteCount}
-					</button>
-					{#if comment.canManage}
-						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-						<a href={editCommentHref(comment.id)}>수정</a>
-						<form method="POST" action="?/deleteComment">
-							<input type="hidden" name="commentId" value={comment.id} />
-							<button type="submit">삭제</button>
-						</form>
+		<article class:reply-comment={comment.replyToAuthorName} class="comment item">
+			{#if comment.replyToAuthorName}
+				<div class="reply-parent">
+					<span>
+						<img
+							src={levelSrc(comment.replyToAuthorPoints)}
+							alt={`레벨 ${levelFor(comment.replyToAuthorPoints)}`}
+						/>
+						{comment.replyToAuthorName}
+					</span>
+					{#if comment.replyToCreatedAt}
+						<time datetime={comment.replyToCreatedAt.toISOString()}
+							>{relativeTime(comment.replyToCreatedAt)}</time
+						>
 					{/if}
 				</div>
-				{#if commentVotes[comment.id]?.message}<p class="vote-message">
-						{commentVotes[comment.id].message}
-					</p>{/if}
+			{:else}
+				<div class="reply-parent">
+					<span>
+						<img
+							src={levelSrc(comment.authorPoints)}
+							alt={`레벨 ${levelFor(comment.authorPoints)}`}
+						/>
+						{comment.authorName}
+					</span>
+					<time datetime={comment.createdAt.toISOString()}>{relativeTime(comment.createdAt)}</time>
+				</div>
+			{/if}
+			{#if comment.status === 'deleted'}
+				<p class="deleted-comment">삭제되었습니다</p>
+			{:else}
+				{#if editingComment && comment.canManage && !comment.hasReplies}
+					<form method="POST" action="?/updateComment">
+						<input type="hidden" name="commentId" value={comment.id} />
+						<textarea name="body" rows="4" maxlength="1000">{comment.body}</textarea>
+						{#if form?.form === 'updateComment'}<p class="error">{form.message}</p>{/if}
+						<div class="actions">
+							<button type="submit">수정 완료</button>
+							<a href={postHref()}>취소</a>
+						</div>
+					</form>
+				{:else}
+					{#if comment.replyToAuthorName}
+						<p class="reply-body"><span>@{comment.replyToAuthorName}</span> {comment.body}</p>
+					{:else}
+						<p>{comment.body}</p>
+					{/if}
+					<div class="actions comment-actions">
+						<button
+							class="comment-vote-button"
+							type="button"
+							aria-pressed={commentVotes[comment.id]?.vote === 1}
+							onclick={() => applyClientVote(commentVotes[comment.id], 1)}
+						>
+							👍 {commentVotes[comment.id]?.upvoteCount ?? comment.upvoteCount}
+						</button>
+						<button
+							class="comment-vote-button"
+							type="button"
+							aria-pressed={commentVotes[comment.id]?.vote === -1}
+							onclick={() => applyClientVote(commentVotes[comment.id], -1)}
+						>
+							👎 {commentVotes[comment.id]?.downvoteCount ?? comment.downvoteCount}
+						</button>
+						{#if comment.canManage}
+							{#if !comment.hasReplies}
+								<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+								<a href={editCommentHref(comment.id)}>수정</a>
+							{/if}
+							<form method="POST" action="?/deleteComment">
+								<input type="hidden" name="commentId" value={comment.id} />
+								<button type="submit">삭제</button>
+							</form>
+						{/if}
+					</div>
+					{#if commentVotes[comment.id]?.message}<p class="vote-message">
+							{commentVotes[comment.id].message}
+						</p>{/if}
+					{#if data.user?.profile}
+						<details class="reply-form">
+							<summary>답글</summary>
+							<form method="POST" action="?/createComment">
+								<input type="hidden" name="parentCommentId" value={comment.id} />
+								<textarea name="body" rows="3" maxlength="1000"
+									>{form?.form === 'createComment' && failedReplyParentId === comment.id
+										? (form.body ?? '')
+										: ''}</textarea
+								>
+								{#if form?.form === 'createComment' && failedReplyParentId === comment.id}
+									<p class="error">{form.message}</p>
+								{/if}
+								<button type="submit">답글 등록</button>
+							</form>
+						</details>
+					{/if}
+				{/if}
 			{/if}
 		</article>
 	{:else}
@@ -249,12 +398,14 @@
 </section>
 
 {#if data.user?.profile}
-	<form method="POST" action="?/createComment" class="box">
+	<form method="POST" action="?/createComment" class="box comment-form">
 		<label for="comment-body">댓글</label>
 		<textarea id="comment-body" name="body" rows="4" maxlength="1000"
-			>{form?.form === 'createComment' ? (form.body ?? '') : ''}</textarea
+			>{form?.form === 'createComment' && !failedReplyParentId ? (form.body ?? '') : ''}</textarea
 		>
-		{#if form?.form === 'createComment'}<p class="error">{form.message}</p>{/if}
+		{#if form?.form === 'createComment' && !failedReplyParentId}<p class="error">
+				{form.message}
+			</p>{/if}
 		<button type="submit">등록</button>
 	</form>
 {:else}
@@ -366,13 +517,140 @@
 		align-items: center;
 	}
 
+	.actions :is(a, button) {
+		display: inline-flex;
+		min-height: 2rem;
+		align-items: center;
+		justify-content: center;
+		padding: 0.35rem 0.75rem;
+		border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+		border-radius: 0.25rem;
+		background: ButtonFace;
+		color: ButtonText;
+		font: inherit;
+		line-height: 1;
+		text-decoration: none;
+		cursor: pointer;
+	}
+
 	.comment p {
 		margin-block: 0.25rem;
 		white-space: pre-wrap;
 	}
 
+	.deleted-comment {
+		color: #8a8f98;
+		font-style: italic;
+	}
+
+	.reply-parent img {
+		width: 1.1rem;
+		height: 1.1rem;
+	}
+
+	.reply-comment {
+		margin-left: 1rem;
+	}
+
+	.reply-parent {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-bottom: 0.5rem;
+		padding: 0.4rem 0.6rem;
+		border-radius: 0.25rem;
+		background: #e5e5e5;
+		color: #111827;
+	}
+
+	.reply-parent span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
+	.reply-parent time {
+		color: #8a8f98;
+		white-space: nowrap;
+	}
+
+	.reply-body span {
+		padding: 0.15rem 0.4rem;
+		border-radius: 999px;
+		background: #eaf2ff;
+		color: #2563eb;
+		font-weight: 600;
+	}
+
 	.comment-actions {
 		margin-top: 0.5rem;
+		justify-content: flex-start;
+	}
+
+	.comment-actions .comment-vote-button {
+		min-height: auto;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		color: inherit;
+	}
+
+	.reply-form {
+		margin-top: 0.75rem;
+	}
+
+	.reply-form form {
+		display: grid;
+		gap: 0.5rem;
+		margin-top: 0.5rem;
+	}
+
+	.reply-form button {
+		justify-self: end;
+		width: auto;
+		padding: 0.35rem 0.85rem;
+	}
+
+	.vote-bar .actions {
+		justify-content: center;
+	}
+
+	.vote-bar .vote-button {
+		gap: 0.6rem;
+		min-height: 2.75rem;
+		padding: 0.5rem 1rem;
+		border: 0;
+		border: 0.2rem solid #888;
+		border-radius: 999px;
+		font-weight: 600;
+	}
+
+	.vote-bar .vote-button[aria-pressed='true'] {
+		background: #888;
+	}
+
+	.vote-bar .vote-button strong {
+		font-weight: 800;
+	}
+
+	.up-count {
+		color: #00ff1a;
+	}
+
+	.down-count {
+		color: #ff5b69;
+	}
+
+	.comment-form {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.comment-form button {
+		justify-self: end;
+		width: auto;
+		padding: 0.35rem 0.85rem;
 	}
 
 	.error,
