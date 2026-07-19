@@ -1,27 +1,65 @@
-import { and, count, desc, eq, lte, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, lte, sql } from 'drizzle-orm';
 import type { getDb } from '$lib/server/db';
-import { postVotes, posts } from '$lib/server/db/schema';
+import { postAttachments, postVotes, posts } from '$lib/server/db/schema';
 import type { CategorySummary } from '$lib/categories/category';
 import { applyVote, type VoteValue } from '$lib/server/content-actions';
+import type { PendingAttachment } from '$lib/server/media-policy';
 import { toCategoryPostItems } from './category-posts';
 import { groupHomePosts } from './home-posts';
 
 type Db = ReturnType<typeof getDb>;
 
+function attachmentUrl(key: string) {
+	return `/media/file/${key
+		.split('/')
+		.map((part) => encodeURIComponent(part))
+		.join('/')}`;
+}
+
+function toAttachment(row: typeof postAttachments.$inferSelect) {
+	return {
+		id: row.id,
+		key: row.r2Key,
+		name: row.fileName,
+		type: row.mimeType,
+		size: row.size,
+		url: attachmentUrl(row.r2Key)
+	};
+}
+
 export function createPostRepository(db: Db) {
+	async function replaceAttachments(postId: string, attachments: PendingAttachment[]) {
+		await db.delete(postAttachments).where(eq(postAttachments.postId, postId));
+		if (attachments.length === 0) return;
+
+		await db.insert(postAttachments).values(
+			attachments.map((attachment) => ({
+				id: crypto.randomUUID(),
+				postId,
+				r2Key: attachment.key,
+				fileName: attachment.name,
+				mimeType: attachment.type,
+				size: attachment.size,
+				createdAt: new Date()
+			}))
+		);
+	}
+
 	return {
 		create: async ({
 			categoryId,
 			authorId,
 			authorName,
 			title,
-			body
+			body,
+			attachments = []
 		}: {
 			categoryId: string;
 			authorId: string;
 			authorName: string;
 			title: string;
 			body: string;
+			attachments?: PendingAttachment[];
 		}) => {
 			const id = crypto.randomUUID();
 			await db.insert(posts).values({
@@ -36,6 +74,7 @@ export function createPostRepository(db: Db) {
 				createdAt: new Date(),
 				updatedAt: new Date()
 			});
+			await replaceAttachments(id, attachments);
 			return id;
 		},
 
@@ -98,22 +137,34 @@ export function createPostRepository(db: Db) {
 			return post;
 		},
 
+		listAttachments: async (postId: string) => {
+			const rows = await db
+				.select()
+				.from(postAttachments)
+				.where(eq(postAttachments.postId, postId))
+				.orderBy(asc(postAttachments.createdAt));
+			return rows.map(toAttachment);
+		},
+
 		updateOwned: async ({
 			postId,
 			authorId,
 			title,
-			body
+			body,
+			attachments
 		}: {
 			postId: string;
 			authorId: string;
 			title: string;
 			body: string;
+			attachments?: PendingAttachment[];
 		}) => {
 			const updated = await db
 				.update(posts)
 				.set({ title, body, updatedAt: new Date() })
 				.where(and(eq(posts.id, postId), eq(posts.authorId, authorId), eq(posts.status, 'public')))
 				.returning({ id: posts.id });
+			if (updated.length > 0 && attachments) await replaceAttachments(postId, attachments);
 			return updated.length > 0;
 		},
 

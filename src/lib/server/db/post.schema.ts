@@ -55,3 +55,24 @@ export const postVotes = sqliteTable(
 	},
 	(table) => [uniqueIndex('post_votes_post_user_unique').on(table.postId, table.userId)]
 );
+
+export const postAttachments = sqliteTable(
+	'post_attachments',
+	{
+		id: text('id').primaryKey(),
+		postId: text('post_id')
+			.notNull()
+			.references(() => posts.id, { onDelete: 'cascade' }),
+		r2Key: text('r2_key').notNull(),
+		fileName: text('file_name').notNull(),
+		mimeType: text('mime_type').notNull(),
+		size: integer('size').notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+	},
+	(table) => [
+		index('post_attachments_post_created_idx').on(table.postId, table.createdAt),
+		uniqueIndex('post_attachments_r2_key_unique').on(table.r2Key)
+	]
+);

@@ -40,10 +40,10 @@ describe('post write policy', () => {
 	it('allows editor media and formatting tags with safe attributes only', () => {
 		expect(
 			sanitizePostBody(
-				'<p style="text-align:center;color:red">text</p><u>u</u><sub>2</sub><sup>3</sup><hr><img src="https://example.com/a.png" onerror="alert(1)" alt="a"><iframe src="https://www.youtube.com/embed/abc123" width="1"></iframe><table><tbody><tr><th>h</th><td>x</td></tr></tbody></table><span style="color:#ff0000;background-color:yellow;font-family:serif;font-size:18px;position:absolute">s</span>'
+				'<p style="text-align:center;color:red">text</p><u>u</u><sub>2</sub><sup>3</sup><hr><img src="/media/file/uploads/u/a.png" onerror="alert(1)" alt="a"><video src="/media/file/uploads/u/a.mp4" autoplay></video><iframe src="https://www.youtube.com/embed/abc123" width="1"></iframe><table><tbody><tr><th>h</th><td>x</td></tr></tbody></table><span style="color:#ff0000;background-color:yellow;font-family:serif;font-size:18px;position:absolute">s</span>'
 			)
 		).toBe(
-			'<p style="text-align:center;color:red">text</p><u>u</u><sub>2</sub><sup>3</sup><hr><img src="https://example.com/a.png" alt="a"><iframe src="https://www.youtube.com/embed/abc123"></iframe><table><tbody><tr><th>h</th><td>x</td></tr></tbody></table><span style="color:#ff0000;background-color:yellow;font-family:serif;font-size:18px">s</span>'
+			'<p style="text-align:center;color:red">text</p><u>u</u><sub>2</sub><sup>3</sup><hr><img src="/media/file/uploads/u/a.png" alt="a"><video controls src="/media/file/uploads/u/a.mp4"></video><iframe src="https://www.youtube.com/embed/abc123"></iframe><table><tbody><tr><th>h</th><td>x</td></tr></tbody></table><span style="color:#ff0000;background-color:yellow;font-family:serif;font-size:18px">s</span>'
 		);
 	});
 });

@@ -5,6 +5,7 @@ import { requireCategory } from '$lib/server/categories/require-category';
 import { validateCommentInput } from '$lib/server/comments/comment-policy';
 import { createCommentRepository } from '$lib/server/comments/repository';
 import { canManageContent, type StoredVoteValue } from '$lib/server/content-actions';
+import { resolvePostAttachments } from '$lib/server/media-policy';
 import { createPostRepository } from '$lib/server/posts/repository';
 import { validatePostInput } from '$lib/server/posts/write-policy';
 import { createProfileRepository } from '$lib/server/profiles/repository';
@@ -40,6 +41,7 @@ export const load: PageServerLoad = async ({ locals, params, platform, url }) =>
 	const commentRepository = createCommentRepository(db);
 	const post = await postRepository.findPublicById(category.id, params.postId);
 	if (!post) error(404, notFound);
+	const attachments = await postRepository.listAttachments(post.id);
 	const comments = await commentRepository.listPublicByPost(post.id);
 	const postVote = locals.user
 		? await postRepository.getUserVote({ postId: post.id, userId: locals.user.id })
@@ -47,6 +49,7 @@ export const load: PageServerLoad = async ({ locals, params, platform, url }) =>
 
 	return {
 		category,
+		attachments,
 		editPost: url.searchParams.get('editPost') === '1',
 		editCommentId: url.searchParams.get('editComment'),
 		post: { ...post, canManage: canManageContent(locals.user?.id, post.authorId), vote: postVote },
@@ -92,16 +95,24 @@ export const actions: Actions = {
 
 	updatePost: async ({ locals, params, platform, request }) => {
 		const db = getDbOrThrow(platform);
+		if (!platform?.env.FILES) throw new Error('R2 binding "FILES" not found');
 		await requireProfile(locals, db);
 		const form = await request.formData();
-		const input = validatePostInput({ title: form.get('title'), body: form.get('body') });
+		const uploaded = await resolvePostAttachments({
+			body: String(form.get('body') ?? ''),
+			bucket: platform.env.FILES,
+			form,
+			userId: locals.user!.id
+		});
+		const input = validatePostInput({ title: form.get('title'), body: uploaded.body });
 		if (!input.ok) return fail(400, { form: 'updatePost', message: input.message });
 
 		const updated = await createPostRepository(db).updateOwned({
 			postId: params.postId,
 			authorId: locals.user!.id,
 			title: input.title,
-			body: input.body
+			body: input.body,
+			attachments: uploaded.attachments
 		});
 		if (!updated) return fail(403, { form: 'updatePost', message: '수정 권한이 없습니다.' });
 		redirect(303, `/${params.category}/${params.postId}`);

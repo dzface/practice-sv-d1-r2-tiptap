@@ -7,10 +7,7 @@
 	let formData = $derived(
 		form as { message?: string; title?: string; body?: string; category?: string } | undefined
 	);
-	let selectedSlug = $state('');
-	$effect(() => {
-		selectedSlug = formData?.category ?? data.selectedCategory?.slug ?? '';
-	});
+	let selectedSlug = $derived(formData?.category ?? data.selectedCategory?.slug ?? '');
 </script>
 
 <svelte:head><title>글쓰기 · 릴토끼</title></svelte:head>
@@ -20,7 +17,7 @@
 	{#if data.writableCategories.length === 0}
 		<p class="muted">글을 작성할 수 있는 게시판이 없습니다.</p>
 	{:else}
-		<form method="post">
+		<form method="post" enctype="multipart/form-data">
 			<label>
 				게시판
 				<select name="category" bind:value={selectedSlug}>
@@ -37,7 +34,11 @@
 			{#if formData?.message}<p class="error">{formData.message}</p>{/if}
 			<div class="actions">
 				<button type="submit">등록</button>
-				<a href={selectedSlug ? resolve('/(app)/[category]', { category: selectedSlug }) : resolve('/')}>
+				<a
+					href={selectedSlug
+						? resolve('/(app)/[category]', { category: selectedSlug })
+						: resolve('/')}
+				>
 					취소
 				</a>
 			</div>

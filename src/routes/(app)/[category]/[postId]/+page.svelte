@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { beforeNavigate } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { onDestroy, onMount } from 'svelte';
 	import PostEditor from '$lib/components/editor/PostEditor.svelte';
 	import {
@@ -94,6 +95,25 @@
 		state.vote = next.vote;
 	}
 
+	function postHref() {
+		return resolve('/(app)/[category]/[postId]', {
+			category: data.category.slug,
+			postId: data.post.id
+		});
+	}
+
+	function attachmentDownloadHref(attachment: { key: string; name: string }) {
+		return `${resolve('/(app)/media/file/[...key]', { key: attachment.key })}?download=1&name=${encodeURIComponent(attachment.name)}`;
+	}
+
+	function editPostHref() {
+		return `${postHref()}?editPost=1`;
+	}
+
+	function editCommentHref(commentId: string) {
+		return `${postHref()}?editComment=${commentId}`;
+	}
+
 	beforeNavigate(flushVotes);
 	onMount(() => {
 		addEventListener('pagehide', flushVotes);
@@ -105,15 +125,15 @@
 <svelte:head><title>{data.post.title} - 릴토끼</title></svelte:head>
 
 {#if data.editPost && data.post.canManage}
-	<form method="POST" action="?/updatePost" class="box">
+	<form method="POST" action="?/updatePost" enctype="multipart/form-data" class="box">
 		<label for="post-title">제목</label>
 		<input id="post-title" name="title" value={data.post.title} maxlength="120" required />
 		<p class="field-label">본문</p>
-		<PostEditor initialHtml={data.post.body} />
+		<PostEditor initialHtml={data.post.body} initialAttachments={data.attachments} />
 		{#if form?.form === 'updatePost'}<p class="error">{form.message}</p>{/if}
 		<div class="actions">
 			<button type="submit">수정 완료</button>
-			<a href={`/${data.category.slug}/${data.post.id}`}>취소</a>
+			<a href={postHref()}>취소</a>
 		</div>
 	</form>
 {:else}
@@ -124,11 +144,29 @@
 			{data.post.authorName} · 조회 {data.post.viewCount} · 좋아요
 			{postVote.upvoteCount - postVote.downvoteCount}
 		</p>
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 		<div class="post-body">{@html data.post.body}</div>
+		{#if data.attachments.length}
+			<section class="attachments" aria-label="첨부파일">
+				<h2>첨부파일</h2>
+				<ul>
+					{#each data.attachments as attachment (attachment.id)}
+						<li>
+							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+							<a href={attachmentDownloadHref(attachment)} download={attachment.name}
+								>{attachment.name}</a
+							>
+							<span class="muted">({Math.ceil(attachment.size / 1024)}KB)</span>
+						</li>
+					{/each}
+				</ul>
+			</section>
+		{/if}
 
 		{#if data.post.canManage}
 			<div class="actions">
-				<a href="?editPost=1">수정</a>
+				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+				<a href={editPostHref()}>수정</a>
 				<form method="POST" action="?/deletePost">
 					<button type="submit">삭제</button>
 				</form>
@@ -160,7 +198,7 @@
 
 <section class="box">
 	<h2>댓글 {data.comments.length}</h2>
-	{#each data.comments as comment}
+	{#each data.comments as comment (comment.id)}
 		{@const editingComment = data.editCommentId === comment.id}
 		<article class="comment item">
 			<p class="muted">{comment.authorName}</p>
@@ -171,7 +209,7 @@
 					{#if form?.form === 'updateComment'}<p class="error">{form.message}</p>{/if}
 					<div class="actions">
 						<button type="submit">수정 완료</button>
-						<a href={`/${data.category.slug}/${data.post.id}`}>취소</a>
+						<a href={postHref()}>취소</a>
 					</div>
 				</form>
 			{:else}
@@ -192,7 +230,8 @@
 						싫어요 {commentVotes[comment.id]?.downvoteCount ?? comment.downvoteCount}
 					</button>
 					{#if comment.canManage}
-						<a href="?editComment={comment.id}">수정</a>
+						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+						<a href={editCommentHref(comment.id)}>수정</a>
 						<form method="POST" action="?/deleteComment">
 							<input type="hidden" name="commentId" value={comment.id} />
 							<button type="submit">삭제</button>
@@ -219,7 +258,9 @@
 		<button type="submit">등록</button>
 	</form>
 {:else}
-	<p class="box muted"><a href="/login">로그인</a> 후 댓글을 작성할 수 있습니다.</p>
+	<p class="box muted">
+		<a href={resolve('/(auth)/login')}>로그인</a> 후 댓글을 작성할 수 있습니다.
+	</p>
 {/if}
 
 <style>
@@ -277,6 +318,24 @@
 	.post-body :global(table) {
 		width: 100%;
 		border-collapse: collapse;
+	}
+
+	.post-body :global(img),
+	.post-body :global(video) {
+		max-width: 100%;
+	}
+
+	.post-body :global(a) {
+		color: #2563eb;
+		text-decoration: underline;
+	}
+
+	.attachments {
+		margin-top: 2rem;
+	}
+
+	.attachments h2 {
+		font-size: 1rem;
 	}
 
 	.post-body :global(th),

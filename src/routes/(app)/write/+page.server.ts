@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { getDb } from '$lib/server/db';
 import { createCategoryRepository } from '$lib/server/categories/repository';
+import { resolvePostAttachments } from '$lib/server/media-policy';
 import { createPostRepository } from '$lib/server/posts/repository';
 import { canWriteToCategory, validatePostInput } from '$lib/server/posts/write-policy';
 import { createProfileRepository } from '$lib/server/profiles/repository';
@@ -26,6 +27,7 @@ export const actions: Actions = {
 	default: async ({ locals, platform, request }) => {
 		if (!locals.user) redirect(303, '/login');
 		if (!platform?.env.DB) throw new Error('D1 binding "DB" not found');
+		if (!platform.env.FILES) throw new Error('R2 binding "FILES" not found');
 
 		const db = getDb(platform.env.DB);
 		const form = await request.formData();
@@ -40,7 +42,13 @@ export const actions: Actions = {
 
 		if (!profile) redirect(303, '/profile/setup');
 
-		const input = validatePostInput({ title: form.get('title'), body: form.get('body') });
+		const uploaded = await resolvePostAttachments({
+			body: String(form.get('body') ?? ''),
+			bucket: platform.env.FILES,
+			form,
+			userId: locals.user.id
+		});
+		const input = validatePostInput({ title: form.get('title'), body: uploaded.body });
 		if (!input.ok) {
 			return fail(400, {
 				message: input.message,
@@ -55,7 +63,8 @@ export const actions: Actions = {
 			authorId: locals.user.id,
 			authorName: profile.nickname,
 			title: input.title,
-			body: input.body
+			body: input.body,
+			attachments: uploaded.attachments
 		});
 
 		redirect(303, `/${category.slug}/${postId}`);

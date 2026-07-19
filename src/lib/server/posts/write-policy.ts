@@ -32,6 +32,8 @@ const allowedTags = new Set([
 	'sup',
 	'hr',
 	'img',
+	'video',
+	'source',
 	'iframe',
 	'table',
 	'thead',
@@ -42,7 +44,7 @@ const allowedTags = new Set([
 	'span'
 ]);
 
-const styleTags = new Set(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'th', 'td']);
+const styleTags = new Set(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'th', 'td', 'img']);
 
 function readAttribute(attributes: string, name: string) {
 	const match = attributes.match(new RegExp(`\\s${name}=(["'])(.*?)\\1`, 'i'));
@@ -54,7 +56,14 @@ function escapeAttribute(value: string) {
 }
 
 function sanitizeStyle(rawStyle: string) {
-	const allowed = new Set(['color', 'background-color', 'font-family', 'font-size', 'text-align']);
+	const allowed = new Set([
+		'color',
+		'background-color',
+		'font-family',
+		'font-size',
+		'text-align',
+		'width'
+	]);
 	const styles = rawStyle
 		.split(';')
 		.map((entry) => entry.trim())
@@ -71,6 +80,10 @@ function sanitizeStyle(rawStyle: string) {
 
 function isSafeUrl(value: string) {
 	return /^https?:\/\//i.test(value);
+}
+
+function isSafeMediaUrl(value: string) {
+	return isSafeUrl(value) || value.startsWith('/media/file/');
 }
 
 function isSafeYoutubeEmbed(value: string) {
@@ -102,9 +115,20 @@ export function sanitizePostBody(html: string) {
 			}
 			if (tag === 'img') {
 				const src = readAttribute(String(rawAttributes), 'src');
-				if (!src || !isSafeUrl(src)) return '';
+				if (!src || !isSafeMediaUrl(src)) return '';
 				const alt = readAttribute(String(rawAttributes), 'alt');
-				return `<img src="${escapeAttribute(src)}"${alt ? ` alt="${escapeAttribute(alt)}"` : ''}>`;
+				return `<img src="${escapeAttribute(src)}"${alt ? ` alt="${escapeAttribute(alt)}"` : ''}${style}>`;
+			}
+			if (tag === 'video') {
+				const src = readAttribute(String(rawAttributes), 'src');
+				if (!src || !isSafeMediaUrl(src)) return '';
+				return `<video controls src="${escapeAttribute(src)}">`;
+			}
+			if (tag === 'source') {
+				const src = readAttribute(String(rawAttributes), 'src');
+				const type = readAttribute(String(rawAttributes), 'type');
+				if (!src || !isSafeMediaUrl(src)) return '';
+				return `<source src="${escapeAttribute(src)}"${type ? ` type="${escapeAttribute(type)}"` : ''}>`;
 			}
 			if (tag === 'iframe') {
 				const src = readAttribute(String(rawAttributes), 'src');
