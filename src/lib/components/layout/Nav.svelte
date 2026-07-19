@@ -15,8 +15,28 @@
 				{group.name}
 			</a>
 		{:else}
-			<details class="dropdown" open={group.name === '빅토끼'}>
-				<summary class="dropdown-toggle">{group.name}</summary>
+			<div class="dropdown desktop-dropdown">
+				<span class="dropdown-toggle">{group.name}</span>
+				<div class="dropdown-menu">
+					{#each group.categories as category (category.id)}
+						<a
+							href={resolve('/(app)/[category]', { category: category.slug })}
+							class="dropdown-item"
+						>
+							{category.name}
+						</a>
+					{/each}
+				</div>
+			</div>
+
+			<details class="dropdown mobile-dropdown" open={group.name === '빅토끼'}>
+				<summary class="dropdown-toggle">
+					<span>{group.name}</span>
+					<span class="material-symbols-outlined arrow-down" aria-hidden="true">
+						arrow_drop_down
+					</span>
+					<span class="material-symbols-outlined arrow-up" aria-hidden="true"> arrow_drop_up </span>
+				</summary>
 				<div class="dropdown-menu">
 					{#each group.categories as category (category.id)}
 						<a
@@ -47,6 +67,10 @@
 		flex: none;
 	}
 
+	.mobile-dropdown {
+		display: none;
+	}
+
 	.dropdown-toggle {
 		display: block;
 		cursor: pointer;
@@ -59,6 +83,11 @@
 		text-decoration: none;
 		white-space: nowrap;
 		list-style: none;
+	}
+
+	.arrow-down,
+	.arrow-up {
+		display: none;
 	}
 
 	.dropdown-toggle::-webkit-details-marker {
@@ -94,9 +123,11 @@
 		outline: none;
 	}
 
-	.dropdown:hover .dropdown-menu,
-	.dropdown:focus-within .dropdown-menu {
-		display: block;
+	@media (min-width: 1111px) {
+		.desktop-dropdown:hover .dropdown-menu,
+		.desktop-dropdown:focus-within .dropdown-menu {
+			display: block;
+		}
 	}
 
 	@media (max-width: 1110px) {
@@ -107,7 +138,11 @@
 			gap: 0.75rem;
 		}
 
-		.dropdown,
+		.desktop-dropdown {
+			display: none;
+		}
+
+		.mobile-dropdown,
 		.single-link {
 			display: block;
 		}
@@ -116,6 +151,28 @@
 			width: 100%;
 			padding: 0.5rem 0;
 			text-align: left;
+		}
+
+		.mobile-dropdown .dropdown-toggle {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+
+		.arrow-down {
+			display: inline-block;
+		}
+
+		.arrow-up {
+			display: none;
+		}
+
+		.mobile-dropdown[open] .arrow-down {
+			display: none;
+		}
+
+		.mobile-dropdown[open] .arrow-up {
+			display: inline-block;
 		}
 
 		.dropdown-menu {
@@ -127,7 +184,7 @@
 			box-shadow: none;
 		}
 
-		.dropdown[open] .dropdown-menu {
+		.mobile-dropdown[open] .dropdown-menu {
 			display: block;
 		}
 	}
