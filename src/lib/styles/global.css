@@ -1,4 +1,4 @@
-:root {
+﻿:root {
 	font-family: system-ui, sans-serif;
 	color: #181818;
 	background: #ffffff;
@@ -22,6 +22,7 @@ body {
 }
 
 #app {
+	min-width: 320px;
 	min-height: 100vh;
 }
 
@@ -38,20 +39,20 @@ textarea {
 
 .site-layout {
 	display: flex;
+
 	min-height: 100vh;
 }
 
 .site-content {
 	flex: 1;
-	min-width: 0;
 }
 
 .advertisement {
 	flex: 0 0 12rem;
-	background-color:ghostwhite
+	background-color: ghostwhite;
 }
 
-@media (max-width: 52rem) {
+@media (max-width: 768px) {
 	.advertisement {
 		display: none;
 	}
@@ -75,7 +76,11 @@ textarea {
 	padding: 0 8rem;
 	min-height: 80vh;
 }
-
+@media (max-width: 1110px) {
+	.site-main {
+		padding: 0 1rem;
+	}
+}
 .muted {
 	opacity: 0.7;
 }
@@ -93,51 +98,59 @@ textarea {
 }
 
 @font-face {
-    font-family: 'GMarketSans';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansLight.woff') format('woff');
-    font-weight: 300;
-    font-display: swap;
+	font-family: 'GMarketSans';
+	src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansLight.woff')
+		format('woff');
+	font-weight: 300;
+	font-display: swap;
 }
 @font-face {
-    font-family: 'BookkMyungjo';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2302@1.0/BookkMyungjo-Lt.woff2') format('woff2');
-    font-weight: 400;
-    font-display: swap;
+	font-family: 'BookkMyungjo';
+	src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2302@1.0/BookkMyungjo-Lt.woff2')
+		format('woff2');
+	font-weight: 400;
+	font-display: swap;
 }
 
 @font-face {
-    font-family: 'Ridibatang';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff') format('woff');
-    font-weight: normal;
-    font-display: swap;
+	font-family: 'Ridibatang';
+	src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff')
+		format('woff');
+	font-weight: normal;
+	font-display: swap;
 }
 @font-face {
-    font-family: 'LineSeed';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_11-01@1.0/LINESeedKR-Th.woff2') format('woff2');
-    font-weight: 100;
-    font-display: swap;
+	font-family: 'LineSeed';
+	src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_11-01@1.0/LINESeedKR-Th.woff2')
+		format('woff2');
+	font-weight: 100;
+	font-display: swap;
 }
 @font-face {
-    font-family: 'KyoboHandwriting2019';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@1.0/KyoboHand.woff') format('woff');
-    font-weight: normal;
-    font-display: swap;
+	font-family: 'KyoboHandwriting2019';
+	src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@1.0/KyoboHand.woff')
+		format('woff');
+	font-weight: normal;
+	font-display: swap;
 }
 @font-face {
-    font-family: 'Independent';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.1/Dokrip.woff') format('woff');
-    font-weight: normal;
-    font-display: swap;
+	font-family: 'Independent';
+	src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.1/Dokrip.woff')
+		format('woff');
+	font-weight: normal;
+	font-display: swap;
 }
 @font-face {
-    font-family: 'DosStory';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/DOSIyagiMedium.woff2') format('woff2');
-    font-weight: normal;
-    font-display: swap;
+	font-family: 'DosStory';
+	src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/DOSIyagiMedium.woff2')
+		format('woff2');
+	font-weight: normal;
+	font-display: swap;
 }
 @font-face {
-    font-family: 'D2Coding';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.0/D2Coding.woff') format('woff');
-    font-weight: normal;
-    font-display: swap;
+	font-family: 'D2Coding';
+	src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.0/D2Coding.woff')
+		format('woff');
+	font-weight: normal;
+	font-display: swap;
 }

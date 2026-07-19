@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import HomeBoard from '$lib/components/post/HomeBoard.svelte';
 	import type { PageProps } from './$types';
 
@@ -21,7 +21,7 @@
 		gap: 1rem 1.5rem;
 	}
 
-	@media (min-width: 48rem) {
+	@media (min-width: 768px) {
 		.home-grid {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}

@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import { resolve } from '$app/paths';
 	import type { CategoryGroup } from '$lib/categories/category';
 
@@ -7,44 +7,62 @@
 
 <nav aria-label="게시판" class="board-nav">
 	{#each groups as group (group.name)}
-		<div class="dropdown">
-			<button type="button" class="dropdown-toggle" id={`nav-${group.name}`} aria-expanded="false">
+		{#if group.categories.length === 1}
+			<a
+				class="dropdown-toggle single-link"
+				href={resolve('/(app)/[category]', { category: group.categories[0].slug })}
+			>
 				{group.name}
-			</button>
-
-			<div class="dropdown-menu" aria-labelledby={`nav-${group.name}`}>
-				{#each group.categories as category (category.id)}
-					<a href={resolve('/(app)/[category]', { category: category.slug })} class="dropdown-item">
-						{category.name}
-					</a>
-				{/each}
-			</div>
-		</div>
+			</a>
+		{:else}
+			<details class="dropdown" open={group.name === '빅토끼'}>
+				<summary class="dropdown-toggle">{group.name}</summary>
+				<div class="dropdown-menu">
+					{#each group.categories as category (category.id)}
+						<a
+							href={resolve('/(app)/[category]', { category: category.slug })}
+							class="dropdown-item"
+						>
+							{category.name}
+						</a>
+					{/each}
+				</div>
+			</details>
+		{/if}
 	{/each}
 </nav>
 
 <style>
 	.board-nav {
 		display: flex;
-		flex-wrap: wrap;
+		flex-wrap: nowrap;
 		justify-content: center;
-		gap: 0.5rem;
+		gap: 0.35rem;
 		color: inherit;
 	}
 
-	.dropdown {
+	.dropdown,
+	.single-link {
 		position: relative;
-		display: inline-block;
+		flex: none;
 	}
 
 	.dropdown-toggle {
+		display: block;
 		cursor: pointer;
-		border: 0px solid color-mix(in srgb, currentColor 18%, transparent);
+		border: 0;
 		border-radius: 0.375rem;
 		background: transparent;
 		color: inherit;
-		padding: 0.45rem 0.75rem;
+		padding: 0.45rem 0.6rem;
 		font-weight: 700;
+		text-decoration: none;
+		white-space: nowrap;
+		list-style: none;
+	}
+
+	.dropdown-toggle::-webkit-details-marker {
+		display: none;
 	}
 
 	.dropdown-menu {
@@ -79,5 +97,38 @@
 	.dropdown:hover .dropdown-menu,
 	.dropdown:focus-within .dropdown-menu {
 		display: block;
+	}
+
+	@media (max-width: 1110px) {
+		.board-nav {
+			flex-direction: column;
+			align-items: stretch;
+			justify-content: flex-start;
+			gap: 0.75rem;
+		}
+
+		.dropdown,
+		.single-link {
+			display: block;
+		}
+
+		.dropdown-toggle {
+			width: 100%;
+			padding: 0.5rem 0;
+			text-align: left;
+		}
+
+		.dropdown-menu {
+			position: static;
+			display: none;
+			min-width: 0;
+			padding: 0.1rem 0 0.2rem 0.75rem;
+			border: 0;
+			box-shadow: none;
+		}
+
+		.dropdown[open] .dropdown-menu {
+			display: block;
+		}
 	}
 </style>

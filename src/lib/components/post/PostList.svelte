@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import { resolve } from '$app/paths';
 
 	type PostListItem = {
@@ -57,6 +57,7 @@
 		display: flex;
 		align-items: center;
 		gap: 1rem;
+		min-width: 0;
 		padding-block: 0.7rem;
 		border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
 	}
@@ -71,6 +72,7 @@
 	.post-title {
 		overflow: hidden;
 		flex: 1;
+		min-width: 0;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}

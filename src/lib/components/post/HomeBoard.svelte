@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import { resolve } from '$app/paths';
 	import type { HomeBoard as HomeBoardData } from '$lib/server/posts/home-posts';
 	import PostList from './PostList.svelte';
@@ -24,5 +24,8 @@
 	h2 {
 		margin-block: 0 0.5rem;
 		font-size: 1.05rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 </style>
