@@ -13,5 +13,5 @@ export const siteConfig = {
 	reportEmail: 'dzface031@gmail.com',
 	termsEffectiveDate: '2026-07-05',
 	description: '작고 단순한 토끼 커뮤니티',
-	siteUrl: 'https://practice-sv-d1-r2-tipex.dzface031.workers.dev/'
+	siteUrl: 'https://practice-sv-d1-r2-titap.dzface031.workers.dev/'
 } satisfies SiteConfig;
