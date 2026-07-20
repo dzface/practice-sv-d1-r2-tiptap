@@ -1,5 +1,6 @@
-import { fail, redirect } from '@sveltejs/kit';
+﻿import { fail, redirect } from '@sveltejs/kit';
 import { getDb } from '$lib/server/db';
+import { createAnonymousName, isAnonymousCategory } from '$lib/server/anonymous';
 import { createCategoryRepository } from '$lib/server/categories/repository';
 import { resolvePostAttachments } from '$lib/server/media-policy';
 import { createPostRepository } from '$lib/server/posts/repository';
@@ -62,6 +63,7 @@ export const actions: Actions = {
 			categoryId: category.id,
 			authorId: locals.user.id,
 			authorName: profile.nickname,
+			anonymousName: isAnonymousCategory(category.slug) ? createAnonymousName() : null,
 			title: input.title,
 			body: input.body,
 			attachments: uploaded.attachments

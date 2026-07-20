@@ -1,7 +1,8 @@
-import { and, asc, count, desc, eq, lte, sql } from 'drizzle-orm';
+﻿import { and, asc, count, desc, eq, lte, sql } from 'drizzle-orm';
 import type { getDb } from '$lib/server/db';
 import { postAttachments, postVotes, posts } from '$lib/server/db/schema';
 import type { CategorySummary } from '$lib/categories/category';
+import { displayAuthorName } from '$lib/server/anonymous';
 import { applyVote, type VoteValue } from '$lib/server/content-actions';
 import type { PendingAttachment } from '$lib/server/media-policy';
 import { toCategoryPostItems } from './category-posts';
@@ -50,6 +51,7 @@ export function createPostRepository(db: Db) {
 			categoryId,
 			authorId,
 			authorName,
+			anonymousName = null,
 			title,
 			body,
 			attachments = []
@@ -60,6 +62,7 @@ export function createPostRepository(db: Db) {
 			title: string;
 			body: string;
 			attachments?: PendingAttachment[];
+			anonymousName?: string | null;
 		}) => {
 			const id = crypto.randomUUID();
 			await db.insert(posts).values({
@@ -68,6 +71,7 @@ export function createPostRepository(db: Db) {
 				originalCategoryId: categoryId,
 				authorId,
 				authorName,
+				anonymousName,
 				title,
 				body,
 				status: 'public',
@@ -95,6 +99,7 @@ export function createPostRepository(db: Db) {
 					id: posts.id,
 					title: posts.title,
 					authorName: posts.authorName,
+					anonymousName: posts.anonymousName,
 					viewCount: posts.viewCount,
 					upvoteCount: posts.upvoteCount,
 					downvoteCount: posts.downvoteCount,
@@ -106,7 +111,12 @@ export function createPostRepository(db: Db) {
 				.limit(limit)
 				.offset(offset);
 
-			return toCategoryPostItems(result);
+			return toCategoryPostItems(
+				result.map((post) => ({
+					...post,
+					authorName: displayAuthorName(post.authorName, post.anonymousName)
+				}))
+			);
 		},
 
 		findPublicById: async (categoryId: string, postId: string) => {
@@ -124,6 +134,7 @@ export function createPostRepository(db: Db) {
 					title: posts.title,
 					body: posts.body,
 					authorName: posts.authorName,
+					anonymousName: posts.anonymousName,
 					viewCount: posts.viewCount,
 					upvoteCount: posts.upvoteCount,
 					downvoteCount: posts.downvoteCount,
@@ -134,7 +145,9 @@ export function createPostRepository(db: Db) {
 					and(eq(posts.id, postId), eq(posts.categoryId, categoryId), eq(posts.status, 'public'))
 				)
 				.limit(1);
-			return post;
+			return post
+				? { ...post, authorName: displayAuthorName(post.authorName, post.anonymousName) }
+				: post;
 		},
 
 		listAttachments: async (postId: string) => {
@@ -236,6 +249,15 @@ export function createPostRepository(db: Db) {
 				.where(and(eq(postVotes.postId, postId), eq(postVotes.userId, userId)))
 				.limit(1);
 			return (vote?.value as VoteValue | undefined) ?? null;
+		},
+
+		findAnonymousAuthorContext: async (postId: string) => {
+			const [post] = await db
+				.select({ authorId: posts.authorId, anonymousName: posts.anonymousName })
+				.from(posts)
+				.where(and(eq(posts.id, postId), eq(posts.status, 'public')))
+				.limit(1);
+			return post ?? null;
 		},
 
 		isPublicInCategory: async (categoryId: string, postId: string) => {

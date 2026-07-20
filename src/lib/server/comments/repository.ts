@@ -1,7 +1,8 @@
-import { and, asc, eq, inArray } from 'drizzle-orm';
+﻿import { and, asc, eq, inArray } from 'drizzle-orm';
 import { commentVotes, comments, profiles } from '$lib/server/db/schema';
 import type { getDb } from '$lib/server/db';
 import { applyVote, type VoteValue } from '$lib/server/content-actions';
+import { displayAuthorName } from '$lib/server/anonymous';
 
 type Db = ReturnType<typeof getDb>;
 
@@ -11,12 +12,14 @@ export function createCommentRepository(db: Db) {
 			postId,
 			authorId,
 			authorName,
+			anonymousName = null,
 			parentCommentId,
 			body
 		}: {
 			postId: string;
 			authorId: string;
 			authorName: string;
+			anonymousName?: string | null;
 			parentCommentId?: string | null;
 			body: string;
 		}) => {
@@ -25,6 +28,7 @@ export function createCommentRepository(db: Db) {
 				postId,
 				authorId,
 				authorName,
+				anonymousName,
 				parentCommentId,
 				body,
 				status: 'public',
@@ -39,6 +43,7 @@ export function createCommentRepository(db: Db) {
 					id: comments.id,
 					authorId: comments.authorId,
 					authorName: comments.authorName,
+					anonymousName: comments.anonymousName,
 					authorPoints: profiles.points,
 					parentCommentId: comments.parentCommentId,
 					body: comments.body,
@@ -50,11 +55,21 @@ export function createCommentRepository(db: Db) {
 				.from(comments)
 				.leftJoin(profiles, eq(profiles.userId, comments.authorId))
 				.where(and(eq(comments.postId, postId), inArray(comments.status, ['public', 'deleted'])))
-				.orderBy(asc(comments.createdAt)),
+				.orderBy(asc(comments.createdAt))
+				.then((rows) =>
+					rows.map((comment) => ({
+						...comment,
+						authorName: displayAuthorName(comment.authorName, comment.anonymousName)
+					}))
+				),
 
 		findPublicInPost: async ({ commentId, postId }: { commentId: string; postId: string }) => {
 			const [comment] = await db
-				.select({ id: comments.id, authorName: comments.authorName })
+				.select({
+					id: comments.id,
+					authorName: comments.authorName,
+					anonymousName: comments.anonymousName
+				})
 				.from(comments)
 				.where(
 					and(
@@ -64,8 +79,16 @@ export function createCommentRepository(db: Db) {
 					)
 				)
 				.limit(1);
-			return comment ?? null;
+			return comment
+				? { ...comment, authorName: displayAuthorName(comment.authorName, comment.anonymousName) }
+				: null;
 		},
+
+		listAnonymousAuthors: (postId: string) =>
+			db
+				.select({ authorId: comments.authorId, anonymousName: comments.anonymousName })
+				.from(comments)
+				.where(eq(comments.postId, postId)),
 
 		updateOwned: async ({
 			commentId,

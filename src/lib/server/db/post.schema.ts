@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+﻿import { sql } from 'drizzle-orm';
 import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { user } from './auth.schema';
 import { categories } from './category.schema';
@@ -15,6 +15,7 @@ export const posts = sqliteTable(
 			.references(() => categories.id, { onUpdate: 'cascade' }),
 		authorId: text('author_id').references(() => user.id, { onDelete: 'set null' }),
 		authorName: text('author_name').notNull(),
+		anonymousName: text('anonymous_name'),
 		title: text('title').notNull(),
 		body: text('body').notNull(),
 		viewCount: integer('view_count').notNull().default(0),

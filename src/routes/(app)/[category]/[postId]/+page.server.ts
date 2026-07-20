@@ -1,5 +1,6 @@
-import { error, fail, redirect } from '@sveltejs/kit';
+﻿import { error, fail, redirect } from '@sveltejs/kit';
 import { getDb } from '$lib/server/db';
+import { isAnonymousCategory, pickAnonymousName } from '$lib/server/anonymous';
 import { createCategoryRepository } from '$lib/server/categories/repository';
 import { requireCategory } from '$lib/server/categories/require-category';
 import { validateCommentInput } from '$lib/server/comments/comment-policy';
@@ -56,6 +57,7 @@ export const load: PageServerLoad = async ({ locals, params, platform, url }) =>
 		comments: await Promise.all(
 			comments.map(async (comment) => ({
 				...comment,
+				authorPoints: isAnonymousCategory(category.slug) ? null : comment.authorPoints,
 				canManage: canManageContent(locals.user?.id, comment.authorId),
 				vote: locals.user
 					? await commentRepository.getUserVote({ commentId: comment.id, userId: locals.user.id })
@@ -100,10 +102,24 @@ export const actions: Actions = {
 			});
 		}
 
+		const postRepository = createPostRepository(db);
+		const anonymousContext = isAnonymousCategory(category.slug)
+			? await postRepository.findAnonymousAuthorContext(params.postId)
+			: null;
+		const anonymousName = anonymousContext
+			? pickAnonymousName({
+					postAuthorId: anonymousContext.authorId,
+					postAnonymousName: anonymousContext.anonymousName,
+					commentAuthors: await commentRepository.listAnonymousAuthors(params.postId),
+					userId: locals.user!.id
+				})
+			: null;
+
 		await commentRepository.create({
 			postId: params.postId,
 			authorId: locals.user!.id,
 			authorName: profile.nickname,
+			anonymousName,
 			parentCommentId: parentComment?.id ?? null,
 			body: input.body
 		});
