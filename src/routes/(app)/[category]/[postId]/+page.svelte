@@ -512,7 +512,7 @@
 	.actions,
 	.actions form {
 		display: flex;
-		flex-wrap: wrap;
+		flex-wrap: nowrap;
 		gap: 0.5rem;
 		align-items: center;
 	}

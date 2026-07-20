@@ -123,7 +123,7 @@
 		outline: none;
 	}
 
-	@media (min-width: 1111px) {
+	@media (min-width: 1110px) {
 		.desktop-dropdown:hover .dropdown-menu,
 		.desktop-dropdown:focus-within .dropdown-menu {
 			display: block;

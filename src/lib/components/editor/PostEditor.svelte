@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import { Editor, Extension, Mark, Node as TiptapNode, mergeAttributes } from '@tiptap/core';
 	import type { NodeViewRendererProps } from '@tiptap/core';
@@ -566,11 +566,11 @@
 
 <div class="toolbar" aria-label="글쓰기 도구">
 	<div class="toolbar-main">
-			<button type="button" title={isHtmlMode ? '글 편집' : 'HTML 수정'} onclick={toggleHtmlMode}>
+		<button type="button" title={isHtmlMode ? '글 편집' : 'HTML 수정'} onclick={toggleHtmlMode}>
 			{isHtmlMode ? '' : ''}
 			<span class="material-symbols-outlined">
-		{isHtmlMode ? 'edit' : 'html'}
-	</span>
+				{isHtmlMode ? 'edit' : 'html'}
+			</span>
 		</button>
 		{#if !isHtmlMode}
 			<button
@@ -636,43 +636,6 @@
 					</span>
 				{/if}
 			</span>
-		{/if}
-	</div>
-
-	{#if !isHtmlMode}
-		<div class="toolbar-main">
-			<button
-				type="button"
-				title="굵게"
-				aria-label="굵게"
-				class:active={editor?.isActive('bold')}
-				onclick={() => editor?.chain().focus().toggleBold().run()}
-				><span class="material-symbols-outlined" aria-hidden="true">format_bold</span></button
-			>
-			<button
-				type="button"
-				title="기울임"
-				aria-label="기울임"
-				class:active={editor?.isActive('italic')}
-				onclick={() => editor?.chain().focus().toggleItalic().run()}
-				><span class="material-symbols-outlined" aria-hidden="true">format_italic</span></button
-			>
-			<button
-				type="button"
-				title="취소선"
-				aria-label="취소선"
-				class:active={editor?.isActive('strike')}
-				onclick={() => editor?.chain().focus().toggleStrike().run()}
-				><span class="material-symbols-outlined" aria-hidden="true">strikethrough_s</span></button
-			>
-			<button
-				type="button"
-				title="밑줄"
-				aria-label="밑줄"
-				class:active={editor?.isActive('underline')}
-				onclick={() => editor?.chain().focus().toggleUnderline().run()}
-				><span class="material-symbols-outlined" aria-hidden="true">format_underlined</span></button
-			>
 			<button type="button" title="링크" aria-label="링크" onclick={setLink}
 				><span class="material-symbols-outlined" aria-hidden="true">link</span></button
 			>
@@ -683,14 +646,10 @@
 				onclick={() => editor?.chain().focus().unsetLink().run()}
 				><span class="material-symbols-outlined" aria-hidden="true">link_off</span></button
 			>
-			<button type="button" onclick={() => editor?.chain().focus().toggleMark('subscript').run()}
-				><span class="material-symbols-outlined"> subscript </span></button
-			>
-			<button type="button" onclick={() => editor?.chain().focus().toggleMark('superscript').run()}
-				><span class="material-symbols-outlined"> superscript </span></button
-			>
-		</div>
+		{/if}
+	</div>
 
+	{#if !isHtmlMode}
 		<div class="toolbar-main">
 			<button type="button" title="왼쪽" aria-label="왼쪽" onclick={() => setAlign('left')}
 				><span class="material-symbols-outlined" aria-hidden="true">format_align_left</span></button
@@ -736,6 +695,46 @@
 				onclick={() => editor?.chain().focus().toggleOrderedList().run()}
 				><span class="material-symbols-outlined" aria-hidden="true">format_list_numbered</span
 				></button
+			>
+		</div>
+		<div class="toolbar-main">
+			<button
+				type="button"
+				title="굵게"
+				aria-label="굵게"
+				class:active={editor?.isActive('bold')}
+				onclick={() => editor?.chain().focus().toggleBold().run()}
+				><span class="material-symbols-outlined" aria-hidden="true">format_bold</span></button
+			>
+			<button
+				type="button"
+				title="기울임"
+				aria-label="기울임"
+				class:active={editor?.isActive('italic')}
+				onclick={() => editor?.chain().focus().toggleItalic().run()}
+				><span class="material-symbols-outlined" aria-hidden="true">format_italic</span></button
+			>
+			<button
+				type="button"
+				title="취소선"
+				aria-label="취소선"
+				class:active={editor?.isActive('strike')}
+				onclick={() => editor?.chain().focus().toggleStrike().run()}
+				><span class="material-symbols-outlined" aria-hidden="true">strikethrough_s</span></button
+			>
+			<button
+				type="button"
+				title="밑줄"
+				aria-label="밑줄"
+				class:active={editor?.isActive('underline')}
+				onclick={() => editor?.chain().focus().toggleUnderline().run()}
+				><span class="material-symbols-outlined" aria-hidden="true">format_underlined</span></button
+			>
+			<button type="button" onclick={() => editor?.chain().focus().toggleMark('subscript').run()}
+				><span class="material-symbols-outlined"> subscript </span></button
+			>
+			<button type="button" onclick={() => editor?.chain().focus().toggleMark('superscript').run()}
+				><span class="material-symbols-outlined"> superscript </span></button
 			>
 		</div>
 		<div class="toolbar-bottom">
@@ -835,12 +834,31 @@
 	.toolbar-main,
 	.toolbar-bottom {
 		display: flex;
-		flex-wrap: wrap;
+		flex-wrap: nowrap;
 		gap: 0.5rem;
 	}
 
 	.toolbar-bottom {
 		padding-top: 0.25rem;
+	}
+
+	@media (min-width: 1110px) {
+		.toolbar {
+			display: grid;
+			grid-template-columns: max-content max-content;
+			align-items: center;
+			column-gap: 0.75rem;
+			row-gap: 0.5rem;
+		}
+
+		.toolbar-main,
+		.toolbar-bottom {
+			flex-wrap: nowrap;
+		}
+
+		.toolbar-bottom {
+			padding-top: 0;
+		}
 	}
 
 	.toolbar-bottom label {

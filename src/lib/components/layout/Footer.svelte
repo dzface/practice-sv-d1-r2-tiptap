@@ -8,14 +8,14 @@
 		<a href={resolve('/policy')}>운영정책</a>
 		<a href={resolve('/privacy')}>개인정보처리방침</a>
 	</nav>
-	<small class="muted">© {new Date().getFullYear()} {siteConfig.companyName}</small>
+	<small class="muted">© {new Date().getFullYear()} {siteConfig.reportEmail}</small>
 </footer>
 
 <style>
 	footer,
 	nav {
 		display: flex;
-		flex-wrap: wrap;
+		flex-wrap: nowrap;
 		gap: 1rem;
 	}
 
