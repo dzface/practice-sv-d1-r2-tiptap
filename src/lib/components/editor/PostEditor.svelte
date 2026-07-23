@@ -875,6 +875,12 @@
 		display: block;
 		font-size: 1.25rem;
 		line-height: 1;
+		@media (max-width: 1110px) {
+			font-size: 1.15rem;
+		}
+		@media (max-width: 768px) {
+			font-size: 0.9rem;
+		}
 	}
 
 	.sr-only-file {
