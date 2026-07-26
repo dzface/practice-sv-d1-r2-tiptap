@@ -1,16 +1,21 @@
-import { fail, redirect } from '@sveltejs/kit';
+﻿import { fail, redirect } from '@sveltejs/kit';
 import { getDb } from '$lib/server/db';
+import { createPointSettingsRepository } from '$lib/server/points/settings';
 import { validateNickname } from '$lib/server/profiles/nickname';
 import { canUseNickname } from '$lib/server/profiles/nickname-update';
 import { createProfileRepository } from '$lib/server/profiles/repository';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, parent }) => {
+export const load: PageServerLoad = async ({ locals, parent, platform }) => {
 	if (!locals.user) redirect(303, '/login');
 	const { user } = await parent();
 	if (!user?.profile) redirect(303, '/profile/setup');
+	if (!platform?.env.DB) throw new Error('D1 binding "DB" not found');
+
+	const pointSettings = await createPointSettingsRepository(getDb(platform.env.DB)).find();
 	return {
-		profile: user.profile
+		profile: user.profile,
+		pointName: pointSettings.pointName
 	};
 };
 

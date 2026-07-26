@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -15,12 +15,8 @@
 			<dd>{data.profile.nickname}</dd>
 		</div>
 		<div>
-			<dt>역할</dt>
-			<dd>{data.profile.role}</dd>
-		</div>
-		<div>
 			<dt>포인트</dt>
-			<dd>{data.profile.points}</dd>
+			<dd>{data.profile.points} {data.pointName}</dd>
 		</div>
 	</dl>
 </section>
@@ -48,10 +44,10 @@
 <section class="box profile danger">
 	<h2>회원탈퇴</h2>
 	<p class="muted">
-		탈퇴 시 계정, 소셜 로그인 연결, 세션, 프로필은 삭제되며 남은 포인트는 소멸합니다. <br>
+		탈퇴 시 계정, 소셜 로그인 연결, 세션, 프로필은 삭제되며 남은 포인트는 소멸합니다. <br />
 		기존 게시글은 작성 당시 닉네임으로 남습니다.
 	</p>
-	
+
 	<form method="post" action="?/deleteAccount">
 		<label>
 			탈퇴하려면 아래에 "탈퇴"를 입력하세요.

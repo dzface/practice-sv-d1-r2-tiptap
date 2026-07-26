@@ -1,14 +1,46 @@
-﻿import { desc, eq } from 'drizzle-orm';
-import { actionToStatus, type AdminAction, type AdminTargetType } from '$lib/server/admin-policy';
+﻿import { and, desc, eq, like, or } from 'drizzle-orm';
+import {
+	actionToStatus,
+	type AdminAction,
+	type AdminRole,
+	type AdminTargetType
+} from '$lib/server/admin-policy';
 import type { getDb } from '$lib/server/db';
-import { adminAuditLogs, categories, comments, posts } from '$lib/server/db/schema';
+import { adminAuditLogs, categories, comments, posts, profiles, user } from '$lib/server/db/schema';
 
 type Db = ReturnType<typeof getDb>;
+
+type UserSearch = {
+	field?: string;
+	keyword?: string;
+};
+
+type UserStatus = 'active' | 'suspended';
 
 export function reasonText(value: FormDataEntryValue | null) {
 	return String(value ?? '')
 		.trim()
 		.slice(0, 500);
+}
+
+function userSearchWhere({ field, keyword }: UserSearch) {
+	const term = String(keyword ?? '').trim();
+	if (!term) return undefined;
+	const value = `%${term}%`;
+
+	if (field === 'id') return like(profiles.userId, value);
+	if (field === 'email') return like(user.email, value);
+	if (field === 'name') return like(user.name, value);
+	if (field === 'nickname') return like(profiles.nickname, value);
+	if (field === 'adminMemo') return like(profiles.adminMemo, value);
+
+	return or(
+		like(profiles.userId, value),
+		like(user.email, value),
+		like(user.name, value),
+		like(profiles.nickname, value),
+		like(profiles.adminMemo, value)
+	);
 }
 
 export function createAdminRepository(db: Db) {
@@ -36,7 +68,42 @@ export function createAdminRepository(db: Db) {
 		});
 	}
 
+	const userColumns = {
+		userId: profiles.userId,
+		email: user.email,
+		name: user.name,
+		nickname: profiles.nickname,
+		role: profiles.role,
+		status: profiles.status,
+		points: profiles.points,
+		adminMemo: profiles.adminMemo,
+		suspendedUntil: profiles.suspendedUntil,
+		createdAt: profiles.createdAt,
+		updatedAt: profiles.updatedAt
+	};
+
 	return {
+		listUsers: ({ field, keyword }: UserSearch = {}) => {
+			let query = db
+				.select(userColumns)
+				.from(profiles)
+				.leftJoin(user, eq(user.id, profiles.userId))
+				.$dynamic();
+			const where = userSearchWhere({ field, keyword });
+			if (where) query = query.where(where);
+			return query.orderBy(desc(profiles.createdAt)).limit(50);
+		},
+
+		findUser: async (userId: string) => {
+			const [row] = await db
+				.select(userColumns)
+				.from(profiles)
+				.leftJoin(user, eq(user.id, profiles.userId))
+				.where(eq(profiles.userId, userId))
+				.limit(1);
+			return row ?? null;
+		},
+
 		listPosts: () =>
 			db
 				.select({
@@ -90,7 +157,7 @@ export function createAdminRepository(db: Db) {
 		}: {
 			postId: string;
 			actorUserId: string;
-			action: AdminAction;
+			action: Exclude<AdminAction, 'role_change' | 'user_update'>;
 			reason: string;
 		}) => {
 			const updated = await db
@@ -111,7 +178,7 @@ export function createAdminRepository(db: Db) {
 		}: {
 			commentId: string;
 			actorUserId: string;
-			action: AdminAction;
+			action: Exclude<AdminAction, 'role_change' | 'user_update'>;
 			reason: string;
 		}) => {
 			const updated = await db
@@ -121,6 +188,99 @@ export function createAdminRepository(db: Db) {
 				.returning({ id: comments.id });
 			if (updated.length === 0) return false;
 			await logAction({ actorUserId, action, targetType: 'comment', targetId: commentId, reason });
+			return true;
+		},
+
+		updateUserRole: async ({
+			userId,
+			actorUserId,
+			role,
+			reason
+		}: {
+			userId: string;
+			actorUserId: string;
+			role: AdminRole;
+			reason: string;
+		}) => {
+			const updated = await db
+				.update(profiles)
+				.set({ role, updatedAt: new Date() })
+				.where(eq(profiles.userId, userId))
+				.returning({ userId: profiles.userId });
+			if (updated.length === 0) return false;
+			await logAction({
+				actorUserId,
+				action: 'role_change',
+				targetType: 'user',
+				targetId: userId,
+				reason
+			});
+			return true;
+		},
+
+		updateUserStatus: async ({
+			userId,
+			actorUserId,
+			status
+		}: {
+			userId: string;
+			actorUserId: string;
+			status: UserStatus;
+		}) => {
+			const nextProfile =
+				status === 'active'
+					? { status, suspendedUntil: null, updatedAt: new Date() }
+					: { status, updatedAt: new Date() };
+			const [profile] = await db
+				.update(profiles)
+				.set(nextProfile)
+				.where(eq(profiles.userId, userId))
+				.returning({ userId: profiles.userId });
+			if (!profile) return false;
+			await logAction({
+				actorUserId,
+				action: 'user_update',
+				targetType: 'user',
+				targetId: userId,
+				reason: `status:${status}`
+			});
+			return true;
+		},
+
+		updateUserProfile: async ({
+			userId,
+			actorUserId,
+			email,
+			name,
+			nickname,
+			status,
+			suspendedUntil,
+			adminMemo
+		}: {
+			userId: string;
+			actorUserId: string;
+			email: string;
+			name: string;
+			nickname: string;
+			status: UserStatus;
+			suspendedUntil: Date | null;
+			adminMemo: string;
+		}) => {
+			const [profile] = await db
+				.update(profiles)
+				.set({ nickname, status, suspendedUntil, adminMemo, updatedAt: new Date() })
+				.where(eq(profiles.userId, userId))
+				.returning({ userId: profiles.userId });
+			if (!profile) return false;
+
+			await db.update(user).set({ email, name, updatedAt: new Date() }).where(eq(user.id, userId));
+			await logAction({
+				actorUserId,
+				action: 'user_update',
+				targetType: 'user',
+				targetId: userId,
+				reason: 'profile'
+			});
 			return true;
 		}
 	};

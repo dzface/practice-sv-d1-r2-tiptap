@@ -1,5 +1,5 @@
 ﻿import { describe, expect, test } from 'vitest';
-import { canAccessAdmin, canManageMembers, isAdminAction, type AdminRole } from './admin-policy';
+import { canAccessAdmin, canManageUsers, isAdminAction, type AdminRole } from './admin-policy';
 
 describe('admin policy', () => {
 	test('allows admin and manager to access admin pages', () => {
@@ -9,10 +9,10 @@ describe('admin policy', () => {
 		expect(canAccessAdmin(null)).toBe(false);
 	});
 
-	test('allows only admin to manage members', () => {
-		expect(canManageMembers('admin')).toBe(true);
-		expect(canManageMembers('manager')).toBe(false);
-		expect(canManageMembers('user')).toBe(false);
+	test('allows only admin to manage users', () => {
+		expect(canManageUsers('admin')).toBe(true);
+		expect(canManageUsers('manager')).toBe(false);
+		expect(canManageUsers('user')).toBe(false);
 	});
 
 	test('accepts only known audit actions', () => {

@@ -1,4 +1,4 @@
-{
+﻿{
   "version": "7",
   "dialect": "sqlite",
   "entries": [
@@ -6,7 +6,7 @@
       "idx": 0,
       "version": "6",
       "when": 1783246800861,
-      "tag": "0000_gigantic_cyclops",
+      "tag": "0000_base_auth_categories",
       "breakpoints": true
     }
   ]

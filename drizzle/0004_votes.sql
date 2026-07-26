@@ -1,8 +1,4 @@
-ALTER TABLE `comments` ADD `upvote_count` integer DEFAULT 0 NOT NULL;
---> statement-breakpoint
-ALTER TABLE `comments` ADD `downvote_count` integer DEFAULT 0 NOT NULL;
---> statement-breakpoint
-CREATE TABLE `post_votes` (
+﻿CREATE TABLE `post_votes` (
 	`id` text PRIMARY KEY NOT NULL,
 	`post_id` text NOT NULL,
 	`user_id` text NOT NULL,

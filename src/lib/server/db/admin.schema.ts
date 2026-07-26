@@ -7,8 +7,8 @@ export const adminAuditLogs = sqliteTable(
 	{
 		id: text('id').primaryKey(),
 		actorUserId: text('actor_user_id').references(() => user.id, { onDelete: 'set null' }),
-		action: text('action', { enum: ['hide', 'restore', 'delete'] }).notNull(),
-		targetType: text('target_type', { enum: ['post', 'comment'] }).notNull(),
+		action: text('action', { enum: ['hide', 'restore', 'delete', 'role_change', 'user_update'] }).notNull(),
+		targetType: text('target_type', { enum: ['post', 'comment', 'user'] }).notNull(),
 		targetId: text('target_id').notNull(),
 		reason: text('reason').notNull().default(''),
 		createdAt: integer('created_at', { mode: 'timestamp_ms' })
@@ -20,3 +20,4 @@ export const adminAuditLogs = sqliteTable(
 		index('admin_audit_logs_actor_created_idx').on(table.actorUserId, table.createdAt)
 	]
 );
+

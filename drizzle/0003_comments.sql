@@ -1,10 +1,13 @@
-CREATE TABLE `comments` (
+﻿CREATE TABLE `comments` (
 	`id` text PRIMARY KEY NOT NULL,
 	`post_id` text NOT NULL,
 	`author_id` text,
 	`author_name` text NOT NULL,
+	`anonymous_name` text,
 	`parent_comment_id` text,
 	`body` text NOT NULL,
+	`upvote_count` integer DEFAULT 0 NOT NULL,
+	`downvote_count` integer DEFAULT 0 NOT NULL,
 	`status` text DEFAULT 'public' NOT NULL,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,

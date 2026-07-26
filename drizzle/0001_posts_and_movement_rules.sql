@@ -1,18 +1,11 @@
-UPDATE `categories`
-SET `id` = 'trend'
-WHERE `id` = 'cat_trend'
-  AND NOT EXISTS (SELECT 1 FROM `categories` WHERE `id` = 'trend');
---> statement-breakpoint
-DELETE FROM `categories` WHERE `id` = 'cat_trend';
---> statement-breakpoint
-CREATE TABLE `category_movement_rules` (
+﻿CREATE TABLE `category_movement_rules` (
 	`id` text PRIMARY KEY NOT NULL,
 	`source_category_id` text NOT NULL,
 	`target_category_id` text NOT NULL,
 	`direction` text NOT NULL,
 	`score_threshold` integer NOT NULL,
 	`point_delta` integer NOT NULL,
-	`is_active` integer DEFAULT true NOT NULL,
+	`is_active` integer DEFAULT 1 NOT NULL,
 	FOREIGN KEY (`source_category_id`) REFERENCES `categories`(`id`) ON UPDATE cascade ON DELETE cascade,
 	FOREIGN KEY (`target_category_id`) REFERENCES `categories`(`id`) ON UPDATE cascade ON DELETE cascade
 );
@@ -26,6 +19,7 @@ CREATE TABLE `posts` (
 	`original_category_id` text NOT NULL,
 	`author_id` text,
 	`author_name` text NOT NULL,
+	`anonymous_name` text,
 	`title` text NOT NULL,
 	`body` text NOT NULL,
 	`view_count` integer DEFAULT 0 NOT NULL,

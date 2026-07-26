@@ -1,4 +1,4 @@
-CREATE TABLE `post_attachments` (
+﻿CREATE TABLE `post_attachments` (
 	`id` text PRIMARY KEY NOT NULL,
 	`post_id` text NOT NULL,
 	`r2_key` text NOT NULL,

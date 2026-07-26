@@ -2,7 +2,9 @@
 	"$schema": "./node_modules/wrangler/config-schema.json",
 	"name": "practice-sv-d1-r2-tiptap",
 	"compatibility_date": "2026-07-05",
-	"compatibility_flags": ["nodejs_compat"],
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
 	"main": ".svelte-kit/cloudflare/_worker.js",
 	"assets": {
 		"binding": "ASSETS",
@@ -14,9 +16,10 @@
 		{
 			"binding": "DB",
 			"database_name": "liltokki-db",
-			"database_id": "de3a573c-4b96-4da6-8cd1-c430f469eebd",
+			"database_id": "2ad40aad-2e27-4ae8-b629-96e094b0e796",
 			"migrations_dir": "drizzle"
-		}
+		},
+
 	],
 	"r2_buckets": [
 		{

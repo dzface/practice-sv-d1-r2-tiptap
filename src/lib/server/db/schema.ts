@@ -5,3 +5,4 @@ export * from './category-movement.schema';
 export * from './comment.schema';
 export * from './post.schema';
 export * from './profile.schema';
+export * from './point-settings.schema';

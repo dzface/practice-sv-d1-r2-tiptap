@@ -830,7 +830,17 @@
 		gap: 0.5rem;
 		margin-block: 0.75rem;
 	}
-
+	.toolbar :global(.material-symbols-outlined) {
+		display: block;
+		font-size: 1.25rem;
+		line-height: 1;
+		@media (max-width: 1110px) {
+			font-size: 1.15rem;
+		}
+		@media (max-width: 768px) {
+			font-size: 0.9rem;
+		}
+	}
 	.toolbar-main,
 	.toolbar-bottom {
 		display: flex;
@@ -840,6 +850,11 @@
 
 	.toolbar-bottom {
 		padding-top: 0.25rem;
+	}
+	@media (max-width: 768px) {
+		.toolbar-main button, .toolbar-bottom button{
+			padding : 0;
+		}
 	}
 
 	@media (min-width: 1110px) {
@@ -869,18 +884,6 @@
 
 	.toolbar button.active {
 		font-weight: 700;
-	}
-
-	.toolbar :global(.material-symbols-outlined) {
-		display: block;
-		font-size: 1.25rem;
-		line-height: 1;
-		@media (max-width: 1110px) {
-			font-size: 1.15rem;
-		}
-		@media (max-width: 768px) {
-			font-size: 0.9rem;
-		}
 	}
 
 	.sr-only-file {
